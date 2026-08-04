@@ -395,6 +395,7 @@ extern long double strtold (const char *__nptr, char **__endptr);
 #elif defined(TCC_TARGET_LOONGARCH64)
 # include "loongarch64-gen.c"
 # include "loongarch64-link.c"
+# include "loongarch64-asm.c"
 #else
 #error unknown target
 #endif
