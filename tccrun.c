@@ -1325,6 +1325,9 @@ static void rt_getcontext(ucontext_t *uc, rt_frame *rc)
 #elif defined(__riscv)
     rc->ip = uc->uc_mcontext.__gregs[REG_PC];
     rc->fp = uc->uc_mcontext.__gregs[REG_S0];
+#elif defined(__loongarch__)
+    rc->ip = uc->uc_mcontext.__pc;
+    rc->fp = uc->uc_mcontext.__gregs[22]; /* $fp */
 #endif
 }
 
@@ -1511,7 +1514,9 @@ static int rt_get_caller_pc(addr_t *paddr, rt_frame *rc, int level)
     return 0;
 }
 
-#elif defined(__riscv)
+#elif defined(__riscv) || defined(__loongarch__)
+/* fp is the CFA on both, with ra at fp-8 and the caller's fp at fp-16
+   (tcc's prolog and gcc's alike) */
 static int rt_get_caller_pc(addr_t *paddr, rt_frame *rc, int level)
 {
     if (level == 0) {
