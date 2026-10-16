@@ -84,6 +84,11 @@
 #define O_FMUL_D 0x01050000u
 #define O_FDIV_D 0x01070000u
 #define O_FADD_S 0x01008000u
+#define O_FSUB_S 0x01028000u
+#define O_FMUL_S 0x01048000u
+#define O_FDIV_S 0x01068000u
+#define O_FCMP_D 0x0c200000u  /* fcmp.cond.d cd, fj, fk: | cond<<15 */
+#define O_FCMP_S 0x0c100000u
 /* 2RI12 */
 #define O_ADDI_D 0x02c00000u
 #define O_ADDI_W 0x02800000u
@@ -1296,42 +1301,42 @@ ST_FUNC void gen_opf(int op)
     default:
         assert(0);
     case '+':
-        op = O_FADD_D;
+        op = dbl ? O_FADD_D : O_FADD_S;
     arithop:
         rd = get_reg(RC_FLOAT);
         vtop->r = rd;
         rd = freg(rd);
-        o3r(dbl ? op : O_FADD_S, rd, rs1, rs2);
+        o3r(op, rd, rs1, rs2);
         break;
     case '-':
-        op = O_FSUB_D; goto arithop;
+        op = dbl ? O_FSUB_D : O_FSUB_S; goto arithop;
     case '*':
-        op = O_FMUL_D; goto arithop;
+        op = dbl ? O_FMUL_D : O_FMUL_S; goto arithop;
     case '/':
-        op = O_FDIV_D; goto arithop;
+        op = dbl ? O_FDIV_D : O_FDIV_S; goto arithop;
     case TOK_EQ:
     case TOK_NE:
     case TOK_LT:
     case TOK_LE:
     case TOK_GT:
     case TOK_GE: {
-        /* fcmp.cond.d fcc0, rs1, rs2 ; movcf2gr rd, fcc0 ; (xori 取反) */
-        int cond;
+        /* fcmp.cond.{s,d} fcc0, fj, fk ; movcf2gr rd, fcc0 [; xori rd, 1].
+           a > b and a >= b are b < a and b <= a, so that they are false
+           when either operand is a NaN; only != is a negated compare.
+           cond: CEQ = 4 (quiet, as for C ==), SLT = 3, SLE = 7. */
+        int cond, t;
         rd = get_reg(RC_INT);
         vtop->r = rd;
         rd = ireg(rd);
         switch (op) {
-        case TOK_LT:  cond = 3; break;  /* slt */
-        case TOK_GE:  cond = 3; invert = 1; break;
-        case TOK_LE:  cond = 7; break;  /* sle */
-        case TOK_GT:  cond = 7; invert = 1; break;
-        case TOK_EQ:  cond = 5; break;  /* seq */
-        case TOK_NE:  cond = 5; invert = 1; break;
-        default: cond = 3; break;
+        case TOK_EQ: cond = 4; break;
+        case TOK_NE: cond = 4; invert = 1; break;
+        case TOK_LT: cond = 3; break;
+        case TOK_LE: cond = 7; break;
+        case TOK_GT: cond = 3; t = rs1; rs1 = rs2; rs2 = t; break;
+        default:     cond = 7; t = rs1; rs1 = rs2; rs2 = t; break; /* GE */
         }
-        /* fcmp.cond.d: 0x0c200000 | cond<<15 | fk<<10 | fj<<5 | cd */
-        o(0x0c200000u | (cond << 15) | (rs2 << 10) | (rs1 << 5));
-        /* movcf2gr rd, fcc0: 直接把条件位读到通用寄存器 */
+        o((dbl ? O_FCMP_D : O_FCMP_S) | (cond << 15) | (rs2 << 10) | (rs1 << 5));
         o(O_MOVCF2GR | (0 << 5) | rd);
         if (invert)
             o2ri(O_XORI, rd, rd, 1);
