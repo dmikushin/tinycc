@@ -205,9 +205,11 @@ ST_FUNC void tccelf_end_file(TCCState *s1)
             if (sym_bind == STB_LOCAL)
                 sym_bind = STB_GLOBAL;
 #ifndef TCC_TARGET_PE
-            if (sym_bind == STB_GLOBAL && s1->output_type == TCC_OUTPUT_OBJ) {
+            if (sym_bind == STB_GLOBAL && s1->output_type == TCC_OUTPUT_OBJ
+                && sym_type == STT_FUNC) {
                 /* undefined symbols with STT_FUNC are confusing gnu ld when
-                   linking statically to STT_GNU_IFUNC */
+                   linking statically to STT_GNU_IFUNC; STT_TLS must stay,
+                   GNU ld rejects a TLS definition met by a non-TLS reference */
                 sym_type = STT_NOTYPE;
             }
 #endif
