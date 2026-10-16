@@ -5976,8 +5976,13 @@ ST_FUNC void unary(void)
         break;
     }
 #endif
+#if defined TCC_TARGET_RISCV64 || defined TCC_TARGET_LOONGARCH64
 #ifdef TCC_TARGET_RISCV64
-    case TOK___riscv64_clear_cache: {
+    case TOK___riscv64_clear_cache:
+#else
+    case TOK___loongarch64_clear_cache:
+#endif
+    {
 	parse_builtin_params(0, "ee");
 	vpop();
 	vpop();

@@ -1577,8 +1577,9 @@ ST_FUNC void gen_vla_alloc(CType *type, int align)
 
 ST_FUNC void gen_clear_cache(void)
 {
-    /* LoongArch: ibar 0 (instruction barrier) after code writes */
-    o(0x002ae000u);  /* ibar 0 */
+    /* ibar 0: what gcc emits for __builtin___clear_cache on LoongArch
+       (0x002ae000 written here before is not ibar) */
+    o(0x38728000u);
 }
 
 /* increment tcov counter (LoongArch: pcalau12i + addi.d + ld.d + addi.d + st.d) */

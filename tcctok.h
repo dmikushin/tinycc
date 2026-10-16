@@ -314,6 +314,9 @@
 #ifdef TCC_TARGET_RISCV64
      DEF(TOK___riscv64_clear_cache, "__riscv64_clear_cache")
 #endif
+#ifdef TCC_TARGET_LOONGARCH64
+     DEF(TOK___loongarch64_clear_cache, "__loongarch64_clear_cache")
+#endif
 #if defined TCC_TARGET_ARM64 || defined TCC_TARGET_RISCV64 || defined TCC_TARGET_LOONGARCH64
      DEF(TOK___addtf3, "__addtf3")
      DEF(TOK___subtf3, "__subtf3")
