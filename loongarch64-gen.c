@@ -1095,15 +1095,15 @@ ST_FUNC void gfunc_epilog(void)
     loc = (loc - num_va_regs * 8);
     d = v = (-loc + 15) & -16;
 
-    /* epilog (written backwards, patched into place later):
-       addi.d sp, fp, num_va_regs*8
-       ld.d  ra, fp, -8
-       ld.d  fp, fp, -16
-       jr    ra */
-    o2ri(O_ADDI_D, 3, 22, num_va_regs * 8);  // addi.d sp, fp, va
-    o2ri(O_LD_D, 1, 22, -8);                 // ld.d ra, -8(fp)
-    o2ri(O_LD_D, 22, 22, -16);               // ld.d fp, -16(fp)
-    ojirl(0, 1, 0);                          // jr ra
+    /* epilog. The saved ra/fp must stay at or above sp until reloaded:
+       LoongArch has no red zone, and a signal delivered between raising
+       sp and the loads would overwrite them with its frame.
+       tccdbg.c's LoongArch FDE describes exactly this sequence. */
+    o2ri(O_ADDI_D, 3, 22, -16);                  // addi.d sp, fp, -16
+    o2ri(O_LD_D, 1, 3, 8);                       // ld.d ra, sp, 8
+    o2ri(O_LD_D, 22, 3, 0);                      // ld.d fp, sp, 0
+    o2ri(O_ADDI_D, 3, 3, 16 + num_va_regs * 8);  // addi.d sp, sp, 16+va
+    ojirl(0, 1, 0);                              // jr ra
 
     large_ofs_ind = ind;
     if (v >= (1 << 11)) {

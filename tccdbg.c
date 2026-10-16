@@ -1023,7 +1023,8 @@ static void tcc_debug_frame_end(TCCState *s1, int size)
          addi.d fp, sp, d-va (or a branch to the large-frame tail) ; nop
        where va = bytes of varargs registers spilled just below the CFA, so
        fp = CFA - va, ra at CFA-8-va, fp at CFA-16-va; epilog before ret:
-         addi.d sp, fp, va (sp = CFA) ; ld.d ra ; ld.d fp ; ret.
+         addi.d sp, fp, -16 (sp = CFA-16-va) ; ld.d ra, sp, 8 ; ld.d fp, sp, 0 ;
+         addi.d sp, sp, 16+va (sp = CFA) ; ret.
        The CIE's data alignment factor is -8, so offsets count 8-byte units. */
     dwarf_data1(eh_frame_section, DW_CFA_advance_loc + 4);
     dwarf_data1(eh_frame_section, DW_CFA_def_cfa_offset);
@@ -1041,14 +1042,17 @@ static void tcc_debug_frame_end(TCCState *s1, int size)
     while (size >= 4 &&
 	   read32le(cur_text_section->data + func_ind + size - 4) != 0x4c000020)
 	size -= 4; /* jirl $zero, $ra, 0 = ret */
-    dwarf_data4(eh_frame_section, size - 32); // after 'addi.d sp, fp, va'
+    dwarf_data4(eh_frame_section, size - 36); // after 'addi.d sp, fp, -16'
     dwarf_data1(eh_frame_section, DW_CFA_def_cfa);
     dwarf_uleb128(eh_frame_section, 3); // r3 (sp)
-    dwarf_uleb128(eh_frame_section, 0); // sp = CFA
+    dwarf_uleb128(eh_frame_section, 16 + func_va_size); // sp = CFA-16-va
     dwarf_data1(eh_frame_section, DW_CFA_advance_loc + 4);
     dwarf_data1(eh_frame_section, DW_CFA_restore + 1); // r1 (ra)
     dwarf_data1(eh_frame_section, DW_CFA_advance_loc + 4);
     dwarf_data1(eh_frame_section, DW_CFA_restore + 22); // r22 (fp)
+    dwarf_data1(eh_frame_section, DW_CFA_advance_loc + 4);
+    dwarf_data1(eh_frame_section, DW_CFA_def_cfa_offset);
+    dwarf_uleb128(eh_frame_section, 0); // sp = CFA
 #endif
     while ((eh_frame_section->data_offset - fde_start) & 3)
 	dwarf_data1(eh_frame_section, DW_CFA_nop);
