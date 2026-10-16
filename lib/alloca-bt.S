@@ -199,32 +199,8 @@ _(__bound_alloca):
 /* ---------------------------------------------- */
 #elif defined __loongarch__
 
-/* tcc assembles only directives on LoongArch: the __TINYC__ words are
-   gcc 16's encoding of the mnemonics below (objdump on a 3A5000).
-   With no relocatable call available as a raw word, __bound_new_region
-   is reached through the 8-aligned literal after the code: pcaddi 8
-   points at it, which holds because the function itself is 8-aligned. */
-    .p2align 3
 .globl _(__bound_alloca)
 _(__bound_alloca):
-#ifdef __TINYC__
-    .int 0x00150085
-    .int 0x00119063
-    .int 0x02ffc063
-    .int 0x00830003
-    .int 0x00150064
-    .int 0x02ffc063
-    .int 0x29c00076
-    .int 0x29c02061
-    .int 0x1800010c
-    .int 0x28c0018c
-    .int 0x4c000181
-    .int 0x28c00076
-    .int 0x28c02061
-    .int 0x02c04063
-    .int 0x00150064
-    .int 0x4c000020
-#else
     move      $a1, $a0
     sub.d     $sp, $sp, $a0
     addi.d    $sp, $sp, -16
@@ -233,17 +209,12 @@ _(__bound_alloca):
     addi.d    $sp, $sp, -16
     st.d      $fp, $sp, 0
     st.d      $ra, $sp, 8
-    pcaddi    $t0, 8                /* -> the .quad below */
-    ld.d      $t0, $t0, 0
-    jirl      $ra, $t0, 0           /* __bound_new_region(a0, a1) */
+    bl        _(__bound_new_region) /* (a0, a1) */
     ld.d      $fp, $sp, 0
     ld.d      $ra, $sp, 8
     addi.d    $sp, $sp, 16
     move      $a0, $sp
     ret
-#endif
-    .p2align 3
-    .quad _(__bound_new_region)
 
 /* ---------------------------------------------- */
 #endif

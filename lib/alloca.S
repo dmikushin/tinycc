@@ -148,22 +148,12 @@ _(alloca):
 /* ---------------------------------------------- */
 #elif defined __loongarch__
 
-/* tcc assembles only directives on LoongArch: the __TINYC__ words are
-   gcc 16's encoding of the mnemonics below (objdump on a 3A5000) */
 .globl _(alloca)
 _(alloca):
-#ifdef __TINYC__
-    .int 0x00119063
-    .int 0x02ffc463
-    .int 0x00830003
-    .int 0x00150064
-    .int 0x4c000020
-#else
     sub.d     $sp, $sp, $a0
     addi.d    $sp, $sp, -15
     bstrins.d $sp, $zero, 3, 0      /* sp &= -16 (andi zero-extends) */
     move      $a0, $sp
     ret
-#endif
 
 #endif

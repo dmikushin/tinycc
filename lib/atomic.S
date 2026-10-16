@@ -2676,18 +2676,6 @@ _(atomic_flag_clear_explicit):
         .global _(__atomic_load_1)
         .type   _(__atomic_load_1), %function
 _(__atomic_load_1):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x38720011
-        .int 0x28000084
-        .int 0x38720014
-        .int 0x28c02076
-        .int 0x00678084
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -2697,25 +2685,12 @@ _(__atomic_load_1):
         ld.d            $fp, $sp, 8
         bstrpick.w      $a0, $a0, 0x7, 0x0
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_load_1), .-_(__atomic_load_1)
 
-#endif
         .global _(__atomic_load_2)
         .type   _(__atomic_load_2), %function
 _(__atomic_load_2):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x38720011
-        .int 0x28400084
-        .int 0x38720014
-        .int 0x28c02076
-        .int 0x006f8084
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -2725,25 +2700,12 @@ _(__atomic_load_2):
         ld.d            $fp, $sp, 8
         bstrpick.w      $a0, $a0, 0xf, 0x0
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_load_2), .-_(__atomic_load_2)
 
-#endif
         .global _(__atomic_load_4)
         .type   _(__atomic_load_4), %function
 _(__atomic_load_4):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x38720011
-        .int 0x28800084
-        .int 0x38720014
-        .int 0x28c02076
-        .int 0x00408084
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -2753,24 +2715,12 @@ _(__atomic_load_4):
         ld.d            $fp, $sp, 8
         slli.w          $a0, $a0, 0x0
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_load_4), .-_(__atomic_load_4)
 
-#endif
         .global _(__atomic_load_8)
         .type   _(__atomic_load_8), %function
 _(__atomic_load_8):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x38720011
-        .int 0x28c00084
-        .int 0x38720014
-        .int 0x28c02076
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -2779,24 +2729,12 @@ _(__atomic_load_8):
         dbar            0x14
         ld.d            $fp, $sp, 8
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_load_8), .-_(__atomic_load_8)
 
-#endif
         .global _(__atomic_store_1)
         .type   _(__atomic_store_1), %function
 _(__atomic_store_1):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x38720012
-        .int 0x29000085
-        .int 0x38720018
-        .int 0x28c02076
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -2805,24 +2743,12 @@ _(__atomic_store_1):
         dbar            0x18
         ld.d            $fp, $sp, 8
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_store_1), .-_(__atomic_store_1)
 
-#endif
         .global _(__atomic_store_2)
         .type   _(__atomic_store_2), %function
 _(__atomic_store_2):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x38720012
-        .int 0x29400085
-        .int 0x38720018
-        .int 0x28c02076
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -2831,24 +2757,12 @@ _(__atomic_store_2):
         dbar            0x18
         ld.d            $fp, $sp, 8
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_store_2), .-_(__atomic_store_2)
 
-#endif
         .global _(__atomic_store_4)
         .type   _(__atomic_store_4), %function
 _(__atomic_store_4):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x38720012
-        .int 0x29800085
-        .int 0x38720018
-        .int 0x28c02076
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -2857,24 +2771,12 @@ _(__atomic_store_4):
         dbar            0x18
         ld.d            $fp, $sp, 8
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_store_4), .-_(__atomic_store_4)
 
-#endif
         .global _(__atomic_store_8)
         .type   _(__atomic_store_8), %function
 _(__atomic_store_8):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x38720012
-        .int 0x29c00085
-        .int 0x38720018
-        .int 0x28c02076
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -2883,54 +2785,19 @@ _(__atomic_store_8):
         dbar            0x18
         ld.d            $fp, $sp, 8
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_store_8), .-_(__atomic_store_8)
 
-#endif
         .global _(__atomic_compare_exchange_1)
         .type   _(__atomic_compare_exchange_1), %function
 _(__atomic_compare_exchange_1):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x2a0000af
-        .int 0x03400c8c
-        .int 0x00410d8c
-        .int 0x0283fc0e
-        .int 0x001731ce
-        .int 0x00810004
-        .int 0x001730c6
-        .int 0x00143810
-        .int 0x001731f1
-        .int 0x2000008d
-        .int 0x0014b9b2
-        .int 0x5c001a51
-        .int 0x0014c1b2
-        .int 0x00151a52
-        .int 0x21000092
-        .int 0x5bffe812
-        .int 0x50000800
-        .int 0x38720700
-        .int 0x0014b9ad
-        .int 0x0017b1ad
-        .int 0x006781ac
-        .int 0x00113d8c
-        .int 0x02400584
-        .int 0x40000980
-        .int 0x290000ad
-        .int 0x28c02076
-        .int 0x03400484
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
         ld.bu           $t3, $a1, 0
         andi            $t0, $a0, 0x3
         slli.d          $t0, $t0, 0x3
-        li.w            $t2, 255
+        addi.w          $t2, $zero, 255
         sll.w           $t2, $t2, $t0
         bstrins.d       $a0, $zero, 0x1, 0x0
         sll.w           $a2, $a2, $t0
@@ -2959,49 +2826,12 @@ _(__atomic_compare_exchange_1):
         ld.d            $fp, $sp, 8
         andi            $a0, $a0, 0x1
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_compare_exchange_1), .-_(__atomic_compare_exchange_1)
 
-#endif
         .global _(__atomic_compare_exchange_2)
         .type   _(__atomic_compare_exchange_2), %function
 _(__atomic_compare_exchange_2):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x2a4000af
-        .int 0x03400c8c
-        .int 0x140001ee
-        .int 0x00410d8c
-        .int 0x03bffdce
-        .int 0x001731ce
-        .int 0x00810004
-        .int 0x001730c6
-        .int 0x00143810
-        .int 0x001731f1
-        .int 0x2000008d
-        .int 0x0014b9b2
-        .int 0x5c001a51
-        .int 0x0014c1b2
-        .int 0x00151a52
-        .int 0x21000092
-        .int 0x5bffe812
-        .int 0x50000800
-        .int 0x38720700
-        .int 0x0014b9ad
-        .int 0x0017b1ad
-        .int 0x006f81ac
-        .int 0x00113d8c
-        .int 0x02400584
-        .int 0x40000d80
-        .int 0x294000ad
-        .int 0x03400000
-        .int 0x28c02076
-        .int 0x03400484
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -3034,40 +2864,17 @@ _(__atomic_compare_exchange_2):
         sltui           $a0, $t0, 1
         beqz            $t0,  .L___atomic_compare_exchange_2_078
         st.h            $t1, $a1, 0
-        nop
+        andi            $zero, $zero, 0x0
 .L___atomic_compare_exchange_2_078:
         ld.d            $fp, $sp, 8
         andi            $a0, $a0, 0x1
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_compare_exchange_2), .-_(__atomic_compare_exchange_2)
 
-#endif
         .global _(__atomic_compare_exchange_4)
         .type   _(__atomic_compare_exchange_4), %function
 _(__atomic_compare_exchange_4):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x240000ac
-        .int 0x2000008d
-        .int 0x0280018e
-        .int 0x5c0015ae
-        .int 0x0015180e
-        .int 0x2100008e
-        .int 0x5bffedc0
-        .int 0x50000800
-        .int 0x38720700
-        .int 0x001131ac
-        .int 0x02400584
-        .int 0x40000980
-        .int 0x298000ad
-        .int 0x28c02076
-        .int 0x03400484
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -3091,35 +2898,12 @@ _(__atomic_compare_exchange_4):
         ld.d            $fp, $sp, 8
         andi            $a0, $a0, 0x1
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_compare_exchange_4), .-_(__atomic_compare_exchange_4)
 
-#endif
         .global _(__atomic_compare_exchange_8)
         .type   _(__atomic_compare_exchange_8), %function
 _(__atomic_compare_exchange_8):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x260000ac
-        .int 0x2200008d
-        .int 0x5c0015ac
-        .int 0x0015180e
-        .int 0x2300008e
-        .int 0x5bfff1c0
-        .int 0x50000800
-        .int 0x38720700
-        .int 0x0011b1ac
-        .int 0x02400584
-        .int 0x40000d80
-        .int 0x270000ad
-        .int 0x03400000
-        .int 0x28c02076
-        .int 0x03400484
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -3138,38 +2922,22 @@ _(__atomic_compare_exchange_8):
         sltui           $a0, $t0, 1
         beqz            $t0,  .L___atomic_compare_exchange_8_040
         stptr.d         $t1, $a1, 0
-        nop
+        andi            $zero, $zero, 0x0
 .L___atomic_compare_exchange_8_040:
         ld.d            $fp, $sp, 8
         andi            $a0, $a0, 0x1
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_compare_exchange_8), .-_(__atomic_compare_exchange_8)
 
-#endif
         .global _(__atomic_test_and_set_1)
         .type   _(__atomic_test_and_set_1), %function
 _(__atomic_test_and_set_1):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x00408c8e
-        .int 0x0280040c
-        .int 0x00810004
-        .int 0x0017398d
-        .int 0x386c348c
-        .int 0x28c02076
-        .int 0x0017b984
-        .int 0x00678084
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
         slli.w          $t2, $a0, 0x3
-        li.w            $t0, 1
+        addi.w          $t0, $zero, 1
         bstrins.d       $a0, $zero, 0x1, 0x0
         sll.w           $t1, $t0, $t2
         amor_db.w       $t0, $t1, $a0
@@ -3177,33 +2945,17 @@ _(__atomic_test_and_set_1):
         srl.w           $a0, $t0, $t2
         bstrpick.w      $a0, $a0, 0x7, 0x0
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_test_and_set_1), .-_(__atomic_test_and_set_1)
 
-#endif
         .global _(__atomic_test_and_set_2)
         .type   _(__atomic_test_and_set_2), %function
 _(__atomic_test_and_set_2):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x00408c8e
-        .int 0x0280040c
-        .int 0x00810004
-        .int 0x0017398d
-        .int 0x386c348c
-        .int 0x28c02076
-        .int 0x0017b984
-        .int 0x00678084
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
         slli.w          $t2, $a0, 0x3
-        li.w            $t0, 1
+        addi.w          $t0, $zero, 1
         bstrins.d       $a0, $zero, 0x1, 0x0
         sll.w           $t1, $t0, $t2
         amor_db.w       $t0, $t1, $a0
@@ -3211,33 +2963,17 @@ _(__atomic_test_and_set_2):
         srl.w           $a0, $t0, $t2
         bstrpick.w      $a0, $a0, 0x7, 0x0
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_test_and_set_2), .-_(__atomic_test_and_set_2)
 
-#endif
         .global _(__atomic_test_and_set_4)
         .type   _(__atomic_test_and_set_4), %function
 _(__atomic_test_and_set_4):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x00408c8e
-        .int 0x0280040c
-        .int 0x00810004
-        .int 0x0017398d
-        .int 0x386c348c
-        .int 0x28c02076
-        .int 0x0017b984
-        .int 0x00678084
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
         slli.w          $t2, $a0, 0x3
-        li.w            $t0, 1
+        addi.w          $t0, $zero, 1
         bstrins.d       $a0, $zero, 0x1, 0x0
         sll.w           $t1, $t0, $t2
         amor_db.w       $t0, $t1, $a0
@@ -3245,33 +2981,17 @@ _(__atomic_test_and_set_4):
         srl.w           $a0, $t0, $t2
         bstrpick.w      $a0, $a0, 0x7, 0x0
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_test_and_set_4), .-_(__atomic_test_and_set_4)
 
-#endif
         .global _(__atomic_test_and_set_8)
         .type   _(__atomic_test_and_set_8), %function
 _(__atomic_test_and_set_8):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x00408c8e
-        .int 0x0280040c
-        .int 0x00810004
-        .int 0x0017398d
-        .int 0x386c348c
-        .int 0x28c02076
-        .int 0x0017b984
-        .int 0x00678084
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
         slli.w          $t2, $a0, 0x3
-        li.w            $t0, 1
+        addi.w          $t0, $zero, 1
         bstrins.d       $a0, $zero, 0x1, 0x0
         sll.w           $t1, $t0, $t2
         amor_db.w       $t0, $t1, $a0
@@ -3279,75 +2999,40 @@ _(__atomic_test_and_set_8):
         srl.w           $a0, $t0, $t2
         bstrpick.w      $a0, $a0, 0x7, 0x0
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(__atomic_test_and_set_8), .-_(__atomic_test_and_set_8)
 
-#endif
         .global _(atomic_thread_fence)
         .type   _(atomic_thread_fence), %function
 _(atomic_thread_fence):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x38720010
-        .int 0x28c02076
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
         dbar            0x10
         ld.d            $fp, $sp, 8
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(atomic_thread_fence), .-_(atomic_thread_fence)
 
-#endif
         .global _(atomic_signal_fence)
         .type   _(atomic_signal_fence), %function
 _(atomic_signal_fence):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x28c02076
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
         ld.d            $fp, $sp, 8
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(atomic_signal_fence), .-_(atomic_signal_fence)
 
-#endif
         .global _(atomic_flag_test_and_set)
         .type   _(atomic_flag_test_and_set), %function
 _(atomic_flag_test_and_set):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x00408c8e
-        .int 0x0280040c
-        .int 0x00810004
-        .int 0x0017398d
-        .int 0x386c348c
-        .int 0x28c02076
-        .int 0x0017b984
-        .int 0x00678084
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
         slli.w          $t2, $a0, 0x3
-        li.w            $t0, 1
+        addi.w          $t0, $zero, 1
         bstrins.d       $a0, $zero, 0x1, 0x0
         sll.w           $t1, $t0, $t2
         amor_db.w       $t0, $t1, $a0
@@ -3355,33 +3040,17 @@ _(atomic_flag_test_and_set):
         srl.w           $a0, $t0, $t2
         bstrpick.w      $a0, $a0, 0x7, 0x0
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(atomic_flag_test_and_set), .-_(atomic_flag_test_and_set)
 
-#endif
         .global _(atomic_flag_test_and_set_explicit)
         .type   _(atomic_flag_test_and_set_explicit), %function
 _(atomic_flag_test_and_set_explicit):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x00408c8e
-        .int 0x0280040c
-        .int 0x00810004
-        .int 0x0017398d
-        .int 0x386c348c
-        .int 0x28c02076
-        .int 0x0017b984
-        .int 0x00678084
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
         slli.w          $t2, $a0, 0x3
-        li.w            $t0, 1
+        addi.w          $t0, $zero, 1
         bstrins.d       $a0, $zero, 0x1, 0x0
         sll.w           $t1, $t0, $t2
         amor_db.w       $t0, $t1, $a0
@@ -3389,24 +3058,12 @@ _(atomic_flag_test_and_set_explicit):
         srl.w           $a0, $t0, $t2
         bstrpick.w      $a0, $a0, 0x7, 0x0
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(atomic_flag_test_and_set_explicit), .-_(atomic_flag_test_and_set_explicit)
 
-#endif
         .global _(atomic_flag_clear)
         .type   _(atomic_flag_clear), %function
 _(atomic_flag_clear):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x38720012
-        .int 0x29000080
-        .int 0x38720018
-        .int 0x28c02076
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -3415,24 +3072,12 @@ _(atomic_flag_clear):
         dbar            0x18
         ld.d            $fp, $sp, 8
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(atomic_flag_clear), .-_(atomic_flag_clear)
 
-#endif
         .global _(atomic_flag_clear_explicit)
         .type   _(atomic_flag_clear_explicit), %function
 _(atomic_flag_clear_explicit):
-#ifdef __TINYC__
-        .int 0x02ffc063
-        .int 0x29c02076
-        .int 0x02c04076
-        .int 0x38720012
-        .int 0x29000080
-        .int 0x38720018
-        .int 0x28c02076
-        .int 0x02c04063
-        .int 0x4c000020
-#else
         addi.d          $sp, $sp, -16
         st.d            $fp, $sp, 8
         addi.d          $fp, $sp, 16
@@ -3441,8 +3086,7 @@ _(atomic_flag_clear_explicit):
         dbar            0x18
         ld.d            $fp, $sp, 8
         addi.d          $sp, $sp, 16
-        ret
+        jirl            $zero, $ra, 0
 	.size   _(atomic_flag_clear_explicit), .-_(atomic_flag_clear_explicit)
 
-#endif
 #endif //__loongarch__
