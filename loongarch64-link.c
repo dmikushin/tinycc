@@ -35,6 +35,8 @@ ST_FUNC int code_reloc (int reloc_type)
     case R_LARCH_B26:
     case R_LARCH_CALL36:
     case R_LARCH_RELAX:    /* relax 标记, 在代码段, relocate() 忽略 */
+    case R_LARCH_MARK_LA:  /* GNU as marks la.abs sequences; no-op */
+    case R_LARCH_MARK_PCREL:
     case R_LARCH_DELETE:
     case R_LARCH_CFA:
     case R_LARCH_ALIGN:
@@ -106,6 +108,8 @@ ST_FUNC int gotplt_entry_type (int reloc_type)
     case R_LARCH_SUB32:
     case R_LARCH_SUB64:
     case R_LARCH_DELETE:   /* relax 标记/算术: 不需要 GOT/PLT */
+    case R_LARCH_MARK_LA:
+    case R_LARCH_MARK_PCREL:
     case R_LARCH_CFA:
     case R_LARCH_ALIGN:
     case R_LARCH_RELAX:
@@ -228,6 +232,8 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
 
     switch(type) {
     case R_LARCH_RELAX:    /* relax 标记: 不做任何事 */
+    case R_LARCH_MARK_LA:
+    case R_LARCH_MARK_PCREL:
     case R_LARCH_DELETE:
     case R_LARCH_CFA:
     case R_LARCH_ALIGN:

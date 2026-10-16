@@ -3548,6 +3548,8 @@ invalid:
 #elif defined TCC_TARGET_LOONGARCH64
                     /* relax markers carry no symbol, like RISC-V's */
                     && type != R_LARCH_RELAX
+                    && type != R_LARCH_MARK_LA
+                    && type != R_LARCH_MARK_PCREL
                     && type != R_LARCH_DELETE
                     && type != R_LARCH_ALIGN
                     && type != R_LARCH_PCREL20_S2
