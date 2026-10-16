@@ -219,7 +219,7 @@ arm64-osx_FILES = $(arm64_FILES) tccmacho.c
 arm64-win32_FILES = $(arm64_FILES) tccpe.c
 c67_FILES = $(CORE_FILES) c67-gen.c c67-link.c tcccoff.c
 riscv64_FILES = $(CORE_FILES) riscv64-gen.c riscv64-link.c riscv64-asm.c
-loongarch64_FILES = $(CORE_FILES) loongarch64-gen.c loongarch64-link.c loongarch64-asm.c loongarch64-tok.h loongarch_enc.h
+loongarch64_FILES = $(CORE_FILES) loongarch64-gen.c loongarch64-link.c loongarch64-asm.c loongarch64-tok.h loongarch64-opc.h loongarch_enc.h
 
 TCCDEFS_H$(subst yes,,$(CONFIG_predefs)) = tccdefs_.h
 

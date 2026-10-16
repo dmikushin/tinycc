@@ -421,6 +421,9 @@
 #if defined(TCC_TARGET_RISCV64) || defined(TCC_TARGET_LOONGARCH64)
  DEF_ASMDIR(option)
 #endif
+#if defined(TCC_TARGET_LOONGARCH64)
+ DEF_ASMDIR(dword)   /* GNU as on LoongArch: .dword = .quad (gcc emits it) */
+#endif
  DEF_ASMDIR(short)
  DEF_ASMDIR(long)
  DEF_ASMDIR(int)
