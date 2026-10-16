@@ -998,17 +998,25 @@ ST_FUNC void gfunc_prolog(Sym *func_sym)
             loc -= regcount * 8;
             param_addr = loc;
             for (i = 0; i < regcount; i++) {
+                /* each part lands at its member's offset: for a struct
+                   classified FP+int (e.g. {float f; int i;}) the integer
+                   member is at offset 4, not 8 (riscv64-gen.c has the same
+                   'XXX'); all-integer aggregates give offsets 0 and 8 */
+                int fofs = loc + (fieldofs[i+1] >> 4);
+                int bt = fieldofs[i+1] & VT_BTYPE;
+                uint32_t st = bt == VT_BYTE || bt == VT_BOOL ? O_ST_B
+                            : bt == VT_SHORT ? O_ST_H : bt == VT_INT ? O_ST_W : O_ST_D;
                 if (areg[prc[1+i] - 1] >= 8) {
                     assert(i == 1 && regcount == 2 && !(addr & 7));
                     o2ri(O_LD_D, 12, 22, addr);  // ld.d t0, addr(fp)
                     addr += 8;
-                    o2ri(O_ST_D, 12, 22, loc + i*8);  // st.d t0, loc(fp)
+                    o2ri(st, 12, 22, fofs);      // st.[bhwd] t0, member(fp)
                 } else if (prc[1+i] == RC_FLOAT) {
                     /* fa(k) is $f(k), not $f(12+k) */
                     o2ri((size / regcount) == 4 ? O_FST_S : O_FST_D,
-                         areg[1]++, 22, loc + (fieldofs[i+1] >> 4));
+                         areg[1]++, 22, fofs);
                 } else {
-                    o2ri(O_ST_D, 4 + areg[0]++, 22, loc + i*8); // st.d aX, loc(fp)
+                    o2ri(st, 4 + areg[0]++, 22, fofs); // st.[bhwd] aX, member(fp)
                 }
             }
         }
