@@ -131,6 +131,8 @@
 #define O_LD_H   0x28400000u
 #define O_LD_W   0x28800000u
 #define O_LD_D   0x28c00000u
+#define O_LD_BU  0x2a000000u
+#define O_LD_HU  0x2a400000u
 #define O_ST_B   0x29000000u   /* binutils 权威: st 在 0x29x00000 区间 */
 #define O_ST_H   0x29400000u
 #define O_ST_W   0x29800000u
@@ -419,6 +421,11 @@ ST_FUNC void load(int r, SValue *sv)
         else
             opcode = size == 1 ? O_LD_B : size == 2 ? O_LD_H
                    : size == 4 ? O_LD_W : O_LD_D;
+        /* unsigned char/short are zero-extended; 32-bit values (unsigned
+           too) stay sign-extended in registers, as the psABI and tccgen's
+           RISC-V-style 32-bit handling both expect */
+        if (size < 4 && !is_float(sv->type.t) && (sv->type.t & VT_UNSIGNED))
+            opcode = size == 1 ? O_LD_BU : O_LD_HU;
         if (v == VT_LOCAL || (fr & VT_SYM)) {
             br = load_symofs(r, sv, 0, &fc);
         } else if (v < VT_CONST) {
