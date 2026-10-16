@@ -314,7 +314,7 @@ extern long double strtold (const char *__nptr, char **__endptr);
 # elif defined(TCC_TARGET_RISCV64)
 #  define CONFIG_TCC_ELFINTERP "/lib/ld-linux-riscv64-lp64d.so.1"
 # elif defined(TCC_TARGET_LOONGARCH64)
-#  define CONFIG_TCC_ELFINTERP "/lib/ld-linux-loongarch-lp64d.so.1"
+#  define CONFIG_TCC_ELFINTERP "/lib64/ld-linux-loongarch-lp64d.so.1"
 # elif defined(TCC_TARGET_ARM)
 #  define CONFIG_TCC_ELFINTERP "/lib/ld-linux.so.3"
 #  define CONFIG_TCC_ELFINTERP_ARMHF "/lib/ld-linux-armhf.so.3"

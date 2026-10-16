@@ -2699,8 +2699,8 @@ static int tcc_output_elf(TCCState *s1, FILE *f, int phnum, ElfW(Phdr) *phdr)
     /* XXX should be configurable */
     ehdr.e_flags = EF_RISCV_FLOAT_ABI_DOUBLE;
 #elif defined TCC_TARGET_LOONGARCH64
-    /* LP64D (hard-float, ABI version 0): e_flags = 0 */
-    ehdr.e_flags = 0;
+    /* LP64D, object ABI v1 (the v2 relocation set), as gcc emits */
+    ehdr.e_flags = EF_LARCH_ABI_DOUBLE_FLOAT | EF_LARCH_OBJABI_V1;
 #endif
 
     if (file_type == TCC_OUTPUT_OBJ) {
