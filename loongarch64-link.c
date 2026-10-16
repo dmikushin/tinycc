@@ -57,6 +57,11 @@ ST_FUNC int code_reloc (int reloc_type)
     case R_LARCH_GOT64_PC_HI12:
     case R_LARCH_TLS_LE_HI20:
     case R_LARCH_TLS_LE_LO12:
+    case R_LARCH_TLS_LE64_LO20:
+    case R_LARCH_TLS_LE64_HI12:
+    case R_LARCH_TLS_LE_HI20_R:
+    case R_LARCH_TLS_LE_LO12_R:
+    case R_LARCH_TLS_LE_ADD_R:
     case R_LARCH_ADD6:
     case R_LARCH_SUB6:
     case R_LARCH_ADD_ULEB128:
@@ -109,9 +114,13 @@ ST_FUNC int gotplt_entry_type (int reloc_type)
     case R_LARCH_ADD_ULEB128:
     case R_LARCH_SUB_ULEB128:
     case R_LARCH_64_PCREL:
-    case R_LARCH_TLS_LE_HI20:  /* 局部执行模型 TLS: 无需 GOT
-                                  (relocate() 暂无实现, 命中会打印 FIXME) */
+    case R_LARCH_TLS_LE_HI20:  /* local-exec TLS: offsets from $tp, no GOT */
     case R_LARCH_TLS_LE_LO12:
+    case R_LARCH_TLS_LE64_LO20:
+    case R_LARCH_TLS_LE64_HI12:
+    case R_LARCH_TLS_LE_HI20_R:
+    case R_LARCH_TLS_LE_LO12_R:
+    case R_LARCH_TLS_LE_ADD_R:
         return NO_GOTPLT_ENTRY;
 
     case R_LARCH_B16:
@@ -452,6 +461,41 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
         write32le(ptr, insn);
         return;
     }
+    /* TLS local-exec. $tp points at the start of the executable's TLS
+       block (TLS variant I, as on RISC-V), so the offset is S+A minus the
+       lowest SHF_TLS address. HI20/LO12 pair with lu12i.w + ori (slices);
+       the _R forms pair with addi.d (rounded), as gcc 13+ emits them. */
+    case R_LARCH_TLS_LE_HI20:
+    case R_LARCH_TLS_LE_LO12:
+    case R_LARCH_TLS_LE64_LO20:
+    case R_LARCH_TLS_LE64_HI12:
+    case R_LARCH_TLS_LE_HI20_R:
+    case R_LARCH_TLS_LE_LO12_R: {
+        addr_t tls_start = 0;
+        uint64_t off;
+        int i;
+        for (i = 1; i < s1->nb_sections; i++) {
+            Section *s = s1->sections[i];
+            if (s->sh_flags & SHF_TLS && s->sh_size)
+                if (!tls_start || s->sh_addr < tls_start)
+                    tls_start = s->sh_addr;
+        }
+        off = val - tls_start;
+        if (type == R_LARCH_TLS_LE_HI20 || type == R_LARCH_TLS_LE_HI20_R) {
+            uint64_t hi = type == R_LARCH_TLS_LE_HI20_R ? off + 0x800 : off;
+            if ((int64_t)off != (int32_t)off)
+                tcc_error_noabort("R_LARCH_TLS_LE_HI20 relocation failed");
+            write32le(ptr, (read32le(ptr) & 0xfe00001fu) | (((hi >> 12) & 0xfffff) << 5));
+        } else if (type == R_LARCH_TLS_LE64_LO20)
+            write32le(ptr, (read32le(ptr) & 0xfe00001fu) | (((off >> 32) & 0xfffff) << 5));
+        else if (type == R_LARCH_TLS_LE64_HI12)
+            write32le(ptr, (read32le(ptr) & 0xffc003ffu) | (((off >> 52) & 0xfff) << 10));
+        else
+            write32le(ptr, (read32le(ptr) & 0xffc003ffu) | ((off & 0xfff) << 10));
+        return;
+    }
+    case R_LARCH_TLS_LE_ADD_R:  /* marks the add.d $tp of the _R sequence */
+        return;
     case R_LARCH_32:
         if (s1->output_type & TCC_OUTPUT_DYN) {
             qrel->r_offset = rel->r_offset;

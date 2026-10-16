@@ -343,7 +343,16 @@ static int load_symofs(int r, SValue *sv, int forstore, int *new_fc)
     if (sv->r & VT_SYM) {
         assert(v == VT_CONST);
         rr = is_ireg(r) ? ireg(r) : 12;  /* r12 = t0 (LoongArch 的 r5 是 a1 参数寄存器, 不能当 scratch) */
-        if (sv->sym->type.t & VT_STATIC) {
+        if (sv->sym->type.t & VT_TLS) {
+            /* TLS local-exec: lu12i.w rr, %le_hi20(sym+A) ;
+               ori rr, rr, %le_lo12(sym+A) ; add.d rr, rr, $tp */
+            greloca(cur_text_section, sv->sym, ind, R_LARCH_TLS_LE_HI20, sv->c.i);
+            oli20(O_LU12I_D, rr, 0);
+            greloca(cur_text_section, sv->sym, ind, R_LARCH_TLS_LE_LO12, sv->c.i);
+            o2ri(O_ORI, rr, rr, 0);
+            o3r(O_ADD_D, rr, rr, 2);  /* $tp = $r2 */
+            *new_fc = 0;
+        } else if (sv->sym->type.t & VT_STATIC) {
             /* pcalau12i rr, %pc_hi20(sym+A) ; addi.d rr, rr, %pc_lo12(sym+A)
                (page-aligned pcalau12i; both relocs name the same symbol) */
             greloca(cur_text_section, sv->sym, ind, R_LARCH_PCALA_HI20, sv->c.i);
