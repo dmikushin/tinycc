@@ -53,6 +53,8 @@ ST_FUNC int code_reloc (int reloc_type)
     case R_LARCH_GOT_LO12:
     case R_LARCH_GOT_PC_HI20:
     case R_LARCH_GOT_PC_LO12:
+    case R_LARCH_GOT64_PC_LO20:
+    case R_LARCH_GOT64_PC_HI12:
     case R_LARCH_TLS_LE_HI20:
     case R_LARCH_TLS_LE_LO12:
     case R_LARCH_ADD6:
@@ -133,6 +135,8 @@ ST_FUNC int gotplt_entry_type (int reloc_type)
     case R_LARCH_GOT_LO12:
     case R_LARCH_GOT_PC_HI20:
     case R_LARCH_GOT_PC_LO12:
+    case R_LARCH_GOT64_PC_LO20:
+    case R_LARCH_GOT64_PC_HI12:
         return ALWAYS_GOTPLT_ENTRY;
     }
     return -1;
@@ -267,9 +271,12 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
     case R_LARCH_ADD16:
         write16le(ptr, read16le(ptr) + val);
         return;
-    case R_LARCH_ADD24:
-        write32le(ptr, (read32le(ptr) & 0xffffff) + val);
+    case R_LARCH_ADD24: {
+        /* *(int24_t *)P += S+A: three bytes only, the fourth is not ours */
+        uint32_t v = (ptr[0] | ptr[1] << 8 | ptr[2] << 16) + (uint32_t)val;
+        ptr[0] = v, ptr[1] = v >> 8, ptr[2] = v >> 16;
         return;
+    }
     case R_LARCH_ADD32:
         write32le(ptr, read32le(ptr) + val);
         return;
@@ -282,9 +289,11 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
     case R_LARCH_SUB16:
         write16le(ptr, read16le(ptr) - val);
         return;
-    case R_LARCH_SUB24:
-        write32le(ptr, (read32le(ptr) & 0xffffff) - val);
+    case R_LARCH_SUB24: {
+        uint32_t v = (ptr[0] | ptr[1] << 8 | ptr[2] << 16) - (uint32_t)val;
+        ptr[0] = v, ptr[1] = v >> 8, ptr[2] = v >> 16;
         return;
+    }
     case R_LARCH_SUB32:
         write32le(ptr, read32le(ptr) - val);
         return;
@@ -369,49 +378,42 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
         write32le(ptr, insn);
         return;
     }
-    case R_LARCH_ABS_HI20: {
-        /* lu12i.w+addi.w 配对: imm20 = ((S+A+0x800) >> 12) & 0xfffff
-           (原实现缺 +0x800, 低 12 位 >= 0x800 的绝对地址全错 4KB) */
-        uint32_t insn = read32le(ptr);
-        insn = (insn & 0xfe00001fu) | ((((uint32_t)(val + 0x800) >> 12) & 0xfffff) << 5);
-        write32le(ptr, insn);
+    /* la.abs: lu12i.w / ori / lu32i.d / lu52i.d. ori zero-extends, so the
+       psABI fields are plain slices of S+A, with no rounding. */
+    case R_LARCH_ABS_HI20:
+        write32le(ptr, (read32le(ptr) & 0xfe00001fu) | ((((uint64_t)val >> 12) & 0xfffff) << 5));
         return;
-    }
-    case R_LARCH_ABS_LO12: {
-        uint32_t insn = read32le(ptr);
-        insn = (insn & 0xffc003ffu) | ((val & 0xfff) << 10);
-        write32le(ptr, insn);
+    case R_LARCH_ABS_LO12:
+        write32le(ptr, (read32le(ptr) & 0xffc003ffu) | ((val & 0xfff) << 10));
         return;
-    }
-    case R_LARCH_ABS64_LO20: {
-        /* lu32i.d: imm20@[24:5] = ((S+A+0x800) >> 32) & 0xfffff (+0x800 的
-           进位可能越过 bit32, 必须包含) */
-        uint32_t insn = read32le(ptr);
-        insn = (insn & 0xfe00001fu) | ((((uint64_t)(val + 0x800) >> 32) & 0xfffff) << 5);
-        write32le(ptr, insn);
+    case R_LARCH_ABS64_LO20:
+        write32le(ptr, (read32le(ptr) & 0xfe00001fu) | ((((uint64_t)val >> 32) & 0xfffff) << 5));
         return;
-    }
-    case R_LARCH_ABS64_HI12: {
-        /* lu52i.d (2RI12): si12@[21:10] = ((S+A+0x800) >> 52) & 0xfff */
-        uint32_t insn = read32le(ptr);
-        insn = (insn & 0xffc003ffu) | ((((uint64_t)(val + 0x800) >> 52) & 0xfff) << 10);
-        write32le(ptr, insn);
+    case R_LARCH_ABS64_HI12:
+        write32le(ptr, (read32le(ptr) & 0xffc003ffu) | ((((uint64_t)val >> 52) & 0xfff) << 10));
         return;
-    }
-    case R_LARCH_PCALA64_LO20: {
-        /* lu32i.d: 绝对"调整页"((S+A+0x800)&~0xfff)的 bits[51:32]
-           (pcalau12i 只保证低 32 位页正确, lu32i/lu52i 覆写高位) */
-        int64_t page = (val + 0x800) & ~(int64_t)0xfff;
-        uint32_t insn = read32le(ptr);
-        insn = (insn & 0xfe00001fu) | ((((uint64_t)page >> 32) & 0xfffff) << 5);
-        write32le(ptr, insn);
-        return;
-    }
-    case R_LARCH_PCALA64_HI12: {
-        int64_t page = (val + 0x800) & ~(int64_t)0xfff;
-        uint32_t insn = read32le(ptr);
-        insn = (insn & 0xffc003ffu) | ((((uint64_t)page >> 52) & 0xfff) << 10);
-        write32le(ptr, insn);
+    /* Extreme code model: pcalau12i rA, %pc_hi20 ; addi.d rB, $zero, %pc_lo12 ;
+       lu32i.d rB, %pc64_lo20 ; lu52i.d rB, rB, %pc64_hi12 ; add.d/ldx.d rA, rB.
+       The high 32 bits must undo both sign extensions (addi.d's of the low
+       12 bits, pcalau12i's of bit 31), relative to the pcalau12i 8 (lu32i.d)
+       or 12 (lu52i.d) bytes earlier: GNU ld's RELOCATE_CALC_PC64_HI32. */
+    case R_LARCH_PCALA64_LO20:
+    case R_LARCH_PCALA64_HI12:
+    case R_LARCH_GOT64_PC_LO20:
+    case R_LARCH_GOT64_PC_HI12: {
+        uint64_t t = val, pc, r;
+        if (type == R_LARCH_GOT64_PC_LO20 || type == R_LARCH_GOT64_PC_HI12)
+            t = s1->got->sh_addr + get_sym_attr(s1, sym_index, 0)->got_offset;
+        pc = addr - (type == R_LARCH_PCALA64_LO20 || type == R_LARCH_GOT64_PC_LO20 ? 8 : 12);
+        r = (t & ~(uint64_t)0xfff) - (pc & ~(uint64_t)0xfff);
+        if ((t & 0xfff) > 0x7ff)
+            r += 0x1000 - 0x100000000ULL;
+        if (r & 0x80000000)
+            r += 0x100000000ULL;
+        if (type == R_LARCH_PCALA64_LO20 || type == R_LARCH_GOT64_PC_LO20)
+            write32le(ptr, (read32le(ptr) & 0xfe00001fu) | (((r >> 32) & 0xfffff) << 5));
+        else
+            write32le(ptr, (read32le(ptr) & 0xffc003ffu) | (((r >> 52) & 0xfff) << 10));
         return;
     }
     case R_LARCH_GOT_PC_HI20: {
