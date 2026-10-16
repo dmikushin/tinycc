@@ -661,12 +661,23 @@ static void reg_pass(CType *type, int *prc, int *fieldofs, int named)
     }
 }
 
-/* LoongArch LP64D argument passing:
-   - first 8 integer args in r4..r11 (a0..a7)
-   - first 8 float args in f0..f7 (fa0..fa7)
-   - rest on stack
-   We reuse the riscv64 scheme (which the TCC reg_pass/areg machinery
-   is built around). */
+/* LoongArch LP64D argument passing (psABI v2, "Parameter passing"):
+   integer args in a0..a7 ($r4..$r11), FP args in fa0..fa7 ($f0..$f7).
+   An argument that reg_pass classifies onto FARs keeps them only if every
+   FAR it needs, and the GAR of a float+int struct, is still free;
+   otherwise it is passed by the integer calling convention: GARs, then
+   the stack.  This applies to scalar floats too, so the 9th double goes
+   in a GAR, not on the stack.  GPR_USED/FPR_USED count registers taken. */
+static void reg_pass_avail(CType *type, int *prc, int *fieldofs, int named,
+                           int gpr_used, int fpr_used)
+{
+    int nf, ni;
+    reg_pass(type, prc, fieldofs, named);
+    nf = (prc[1] == RC_FLOAT) + (prc[0] == 2 && prc[2] == RC_FLOAT);
+    ni = prc[0] - nf;
+    if (nf && (fpr_used + nf > 8 || gpr_used + ni > 8))
+        reg_pass(type, prc, fieldofs, 0);
+}
 
 ST_FUNC void gfunc_call(int nb_args)
 {
@@ -701,18 +712,14 @@ ST_FUNC void gfunc_call(int nb_args)
             size = align = 8;
             byref = 64 | (tempofs << 7);
         }
-        reg_pass(&sv->type, prc, fieldofs, old || sa != 0);
+        reg_pass_avail(&sv->type, prc, fieldofs, old || sa != 0,
+                       areg[0], areg[1] - 8);
         if (!old && !sa && align == 2*XLEN && size <= 2*XLEN)
           areg[0] = (areg[0] + 1) & ~1;
         nregs = prc[0];
         if (size == 0)
             info[i] = 0;
-        else if ((prc[1] == RC_INT && areg[0] >= 8)
-            || (prc[1] == RC_FLOAT && areg[1] >= 16)
-            || (nregs == 2 && prc[1] == RC_FLOAT && prc[2] == RC_FLOAT
-                && areg[1] >= 15)
-            || (nregs == 2 && prc[1] != prc[2]
-                && (areg[1] >= 16 || areg[0] >= 8))) {
+        else if (prc[1] == RC_INT && areg[0] >= 8) {
             info[i] = 32;
             if (align < XLEN)
               align = XLEN;
@@ -821,17 +828,8 @@ ST_FUNC void gfunc_call(int nb_args)
                 vpushv(vtop);
             }
             vtop->type.t = loadt | (vtop->type.t & VT_UNSIGNED);
+            /* RC_F(k) is $f(k) = fa(k): already the ABI argument register */
             gv(r < 8 ? RC_R(r) : RC_F(r - 8));
-            if (r >= 8 && (loadt == VT_FLOAT || loadt == VT_DOUBLE)) {
-                /* LoongArch LP64D ABI: 浮点参数寄存器是 $f12-$f19
-                   (fa0-fa7), 而 TCC 的 RC_F 类临时寄存器是 $f0-$f7
-                   (仅 $f0 兼作返回寄存器). 与 riscv64 不同(fa0=f10
-                   同时是参数和返回), 调用前必须把值搬进参数寄存器.
-                   否则 libc/GCC 函数从 $f12.. 读到 0/垃圾. */
-                int src = freg(vtop->r), dst = 12 + (r - 8);
-                o(loadt == VT_FLOAT ? O_FMOV_S : O_FMOV_D
-                  | (src << 5) | dst);
-            }
             vtop->type = origtype;
 
             if (r2 && loadt != VT_LDOUBLE) {
@@ -925,12 +923,9 @@ ST_FUNC void gfunc_prolog(Sym *func_sym)
             type = &char_pointer_type;
             size = align = byref = 8;
         }
-        reg_pass(type, prc, fieldofs, 1);
+        reg_pass_avail(type, prc, fieldofs, 1, areg[0], areg[1]);
         regcount = prc[0];
-        if (areg[prc[1] - 1] >= 8
-            || (regcount == 2
-                && ((prc[1] == RC_FLOAT && prc[2] == RC_FLOAT && areg[1] >= 7)
-                    || (prc[1] != prc[2] && (areg[1] >= 8 || areg[0] >= 8))))) {
+        if (prc[1] == RC_INT && areg[0] >= 8) {
             if (align < XLEN)
               align = XLEN;
             addr = (addr + align - 1) & -align;
@@ -946,11 +941,9 @@ ST_FUNC void gfunc_prolog(Sym *func_sym)
                     addr += 8;
                     o2ri(O_ST_D, 12, 22, loc + i*8);  // st.d t0, loc(fp)
                 } else if (prc[1+i] == RC_FLOAT) {
-                    /* 浮点参数在 ABI 寄存器 $f12-$f19 (fa0-fa7).
-                       (o2ri 直接编码物理寄存器号, 原 8+areg[1] 实际
-                       是 $f8-$f15, 既非内部 $f0-$f7 也非 ABI 槽位) */
+                    /* fa(k) is $f(k), not $f(12+k) */
                     o2ri((size / regcount) == 4 ? O_FST_S : O_FST_D,
-                         12 + areg[1]++, 22, loc + (fieldofs[i+1] >> 4));
+                         areg[1]++, 22, loc + (fieldofs[i+1] >> 4));
                 } else {
                     o2ri(O_ST_D, 4 + areg[0]++, 22, loc + i*8); // st.d aX, loc(fp)
                 }
@@ -1467,10 +1460,7 @@ ST_FUNC void gen_cvt_ftof(int dt)
             (dt == VT_FLOAT ? TOK___trunctfsf2 : TOK___trunctfdf2);
         save_regs(1);
         if (dt == VT_LDOUBLE) {
-            gv(RC_F(0));
-            /* helper 是 GCC 编译的 libgcc, 参数按 ABI 在 $f12
-               (本后端 RC_F 类是 $f0-$f7, 必须显式搬移) */
-            o(O_FMOV_D | (freg(vtop->r) << 5) | 12);
+            gv(RC_F(0));  /* $f0 = fa0, the helper's argument register */
         }
         else {
             gv(RC_R(0));
