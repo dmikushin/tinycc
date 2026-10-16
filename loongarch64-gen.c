@@ -1470,13 +1470,11 @@ ST_FUNC void gen_cvt_ftof(int dt)
         assert (st == VT_FLOAT || st == VT_DOUBLE);
         rs = gv(RC_FLOAT);
         rd = get_reg(RC_FLOAT);
-        rs = freg(rs);
-        rd = freg(rd);
         if (dt == VT_DOUBLE)
-            o(O_FCVT_D_S | (rs << 5) | rd);  /* fcvt.d.s fd=rd, fj=rs */
+            o(O_FCVT_D_S | (freg(rs) << 5) | freg(rd));  /* fcvt.d.s fd, fj */
         else
-            o(O_FCVT_S_D | (rs << 5) | rd);  /* fcvt.s.d fd=rd, fj=rs */
-        vtop->r = rd;
+            o(O_FCVT_S_D | (freg(rs) << 5) | freg(rd));  /* fcvt.s.d fd, fj */
+        vtop->r = rd;  /* tcc register number, not the hardware $f index */
     }
 }
 
