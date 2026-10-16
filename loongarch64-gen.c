@@ -505,7 +505,8 @@ ST_FUNC void load(int r, SValue *sv)
             case TOK_GT:
                 if (op & 1) { inv = 1; op--; }
                 if ((op & 7) == 6) { int t = a; a = b; b = t; inv ^= 1; }
-                o3r((op > TOK_UGT) ? O_SLTU : O_SLT, rr, a, b);
+                /* TOK_LT..TOK_GT (signed) sort after TOK_ULT..TOK_UGT */
+                o3r((op > TOK_UGT) ? O_SLT : O_SLTU, rr, a, b);
                 if (inv)
                     o2ri(O_XORI, rr, rr, 1);
                 break;
