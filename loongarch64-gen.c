@@ -1546,6 +1546,8 @@ ST_FUNC void gen_cvt_ftoi(int t)
         }
         o(O_FTINTRZ_L_D | (rr << 5) | 9);    /* small: ftintrz.l.d $f9, fj */
         o(O_MOVFR2GR_D | (9 << 5) | dr);     /* movfr2gr.d rd=dr, fj=$f9 */
+        if (!l)  /* a 32-bit result, unsigned int too, lives sign-extended */
+            o2ri(O_ADDI_W, dr, dr, 0);
     }
 }
 
