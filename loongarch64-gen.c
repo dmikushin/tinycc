@@ -19,8 +19,9 @@
 
 // Number of registers available to allocator:
 #define NB_REGS 19 // r4-r11 aka a0-a7, f0-f7 aka fa0-fa7, xxx, ra, sp
-/* 阶段 1: 无 loongarch64-asm.c, 不启用内联汇编(CONFIG_TCC_ASM) */
-/* #define CONFIG_TCC_ASM */
+/* tccasm.c handles directives and labels; loongarch64-asm.c has no
+   instruction encoder yet, so mnemonics and inline asm are rejected there */
+#define CONFIG_TCC_ASM
 
 #define TREG_R(x) (x) // x = 0..7
 #define TREG_F(x) (x + 8) // x = 0..7
