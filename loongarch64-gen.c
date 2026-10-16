@@ -601,20 +601,70 @@ static void gen_bounds_call(int v)
     o(O_BL);
 }
 
+/* Bound checking, the riscv64-gen.c scheme: the prolog reserves room
+   that gen_bounds_epilog patches into a __bound_local_new call when the
+   function registered local objects, and the epilog frees them with
+   __bound_local_delete around the return-value registers. */
 static void gen_bounds_prolog(void)
 {
-    /* keep the same scheme as riscv64: called from gfunc_prolog */
-    int saved_ind = ind;
-    func_bound_offset = ind;
-    /* placeholder: sub sp, sp, imm; we patch later */
-    o2ri(O_ADDI_D, 3, 3, 0);
+    /* leave some room for bound checking code */
+    func_bound_offset = lbounds_section->data_offset;
     func_bound_ind = ind;
-    ind = saved_ind;
+    func_bound_add_epilog = 0;
+    o(O_NOP);  /* pcalau12i a0, %got_pc_hi20(lbound section pointer) */
+    o(O_NOP);  /* ld.d a0, a0, %got_pc_lo12(...) */
+    o(O_NOP);  /* bl __bound_local_new */
+}
+
+static void gen_bounds_load_table(Sym *sym_data)
+{
+    greloca(cur_text_section, sym_data, ind, R_LARCH_GOT_PC_HI20, 0);
+    oli20(O_PCALAU12I, 4, 0);                  /* pcalau12i a0, 0 */
+    greloca(cur_text_section, sym_data, ind, R_LARCH_GOT_PC_LO12, 0);
+    o2ri(O_LD_D, 4, 4, 0);                     /* ld.d a0, a0, 0 */
 }
 
 static void gen_bounds_epilog(void)
 {
-    /* placeholder, bounds checking not used on RmikuOS */
+    addr_t saved_ind;
+    addr_t *bounds_ptr;
+    Sym *sym_data;
+
+    int offset_modified = func_bound_offset != lbounds_section->data_offset;
+
+    if (!offset_modified && !func_bound_add_epilog)
+        return;
+
+    /* add end of table info */
+    bounds_ptr = section_ptr_add(lbounds_section, sizeof(addr_t));
+    *bounds_ptr = 0;
+
+    sym_data = get_sym_ref(&char_pointer_type, lbounds_section,
+                           func_bound_offset, PTR_SIZE);
+
+    /* generate bound local allocation */
+    if (offset_modified) {
+        saved_ind = ind;
+        ind = func_bound_ind;
+        gen_bounds_load_table(sym_data);
+        gen_bounds_call(TOK___bound_local_new);
+        ind = saved_ind;
+    }
+
+    /* generate bound check local freeing, keeping the return value
+       (a0/a1, fa0/fa1) alive across the call */
+    o2ri(O_ADDI_D, 3, 3, -32);
+    o2ri(O_ST_D, 4, 3, 0);
+    o2ri(O_ST_D, 5, 3, 8);
+    o2ri(O_FST_D, 0, 3, 16);
+    o2ri(O_FST_D, 1, 3, 24);
+    gen_bounds_load_table(sym_data);
+    gen_bounds_call(TOK___bound_local_delete);
+    o2ri(O_LD_D, 4, 3, 0);
+    o2ri(O_LD_D, 5, 3, 8);
+    o2ri(O_FLD_D, 0, 3, 16);
+    o2ri(O_FLD_D, 1, 3, 24);
+    o2ri(O_ADDI_D, 3, 3, 32);
 }
 
 #endif
@@ -1574,6 +1624,19 @@ ST_FUNC void gen_vla_alloc(CType *type, int align)
     oshift(O_SLLI_D, rr, rr, 4);
     o3r(O_SUB_D, 3, 3, rr);
     vpop();
+#if defined(CONFIG_TCC_BCHECK)
+    if (tcc_state->do_bounds_check) {
+        /* __bound_new_region(sp, size): the size is the copy pushed above */
+        vpushi(0);
+        vtop->r = TREG_R(0);
+        omove(4, 3);  /* move a0, sp */
+        vswap();
+        vpush_helper_func(TOK___bound_new_region);
+        vrott(3);
+        gfunc_call(2);
+        func_bound_add_epilog = 1;
+    }
+#endif
 }
 
 ST_FUNC void gen_clear_cache(void)
