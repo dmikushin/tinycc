@@ -154,6 +154,9 @@
 #define O_FCMP_SLE_D 0x0c238000u  /* fcmp.sle.d (cond=7) */
 #define O_FCMP_SEQ_D 0x0c228000u  /* fcmp.seq.d (cond=5) */
 #define O_FFINT_D_L  0x011d2800u  /* ffint.d.l fd, fj:   fd[4:0] fj[9:5] */
+#define O_FFINT_S_L  0x011d1800u  /* ffint.s.l fd, fj */
+#define O_FCMP_CLT_D 0x0c210000u  /* fcmp.clt.d cd, fj, fk */
+#define O_BCNEZ      0x48000100u  /* bcnez cj, offs21: cj[7:5] offs[15:0]@[25:10] offs[20:16]@[4:0] */
 #define O_FTINTRZ_L_D 0x011aa800u /* ftintrz.l.d fd, fj */
 #define O_FCVT_S_D   0x01191800u  /* fcvt.s.d fd, fj */
 #define O_FCVT_D_S   0x01192400u  /* fcvt.d.s fd, fj */
@@ -1396,17 +1399,29 @@ ST_FUNC void gen_cvt_itof(int t)
         vtop++;
         vtop->r = dr;
         dr = freg(dr);
+        uint32_t ffint = t == VT_FLOAT ? O_FFINT_S_L : O_FFINT_D_L;
         if (u && !l) {
             /* unsigned int: 先零扩展高 32 位 —— 必须在 movgr2fr 之前
                (原来放在 mov 之后, 等于没做, 负解释被 ffint 转换) */
             oshift(O_SLLI_D, rr, rr, 32);
             oshift(O_SRLI_D, rr, rr, 32);
         }
-        /* movgr2fr.d fd=dr, rj=rr ; ffint.d.l fd, fd */
+        /* ffint.{s,d}.l rounds once, straight from the 64-bit integer
+           (going through double first rounds twice for float) */
         o(O_MOVGR2FR_D | (rr << 5) | dr);
-        o(O_FFINT_D_L | (dr << 5) | dr);  /* ffint.d.l fd, fj */
-        if (t == VT_FLOAT)
-            o(O_FCVT_S_D | (dr << 5) | dr);  /* fcvt.s.d fd, fj */
+        o(ffint | (dr << 5) | dr);
+        if (u && l) {
+            /* unsigned long long >= 2^63 read as negative: convert
+               (x >> 1) | (x & 1) instead and double it (round-to-odd
+               keeps the single rounding exact), as gcc does */
+            obranch(O_BGE, rr, 0, 7);                    /* bgez rr, done (+7 insns) */
+            oshift(O_SRLI_D, 12, rr, 1);                 /* t0 = rr >> 1 */
+            o2ri(O_ANDI, 13, rr, 1);                     /* t1 = rr & 1 */
+            o3r(O_OR, 12, 12, 13);
+            o(O_MOVGR2FR_D | (12 << 5) | dr);
+            o(ffint | (dr << 5) | dr);
+            o3r(t == VT_FLOAT ? O_FADD_S : O_FADD_D, dr, dr, dr);
+        }
     }
 }
 
@@ -1433,9 +1448,24 @@ ST_FUNC void gen_cvt_ftoi(int t)
         vtop->r = dr;
         dr = ireg(dr);
         if (ft == VT_FLOAT)
-            o(O_FCVT_D_S | (rr << 5) | rr);  /* fcvt.d.s fd, fj */
-        o(O_FTINTRZ_L_D | (rr << 5) | rr);   /* ftintrz.l.d fd, fj */
-        o(O_MOVFR2GR_D | (rr << 5) | dr);   /* movfr2gr.d rd=dr, fj=rr */
+            o(O_FCVT_D_S | (rr << 5) | rr);  /* fcvt.d.s fd, fj (exact) */
+        if (u && l) {
+            /* unsigned long long: values >= 2^63 do not fit ftintrz.l.d;
+               convert x - 2^63 and set bit 63. $f8/$f9 (ft0/ft1) are
+               never allocated by tcc. */
+            o2ri(O_LU52I_D, 12, 0, 0x43e);               /* t0 = 2^63 as double */
+            o(O_MOVGR2FR_D | (12 << 5) | 8);             /* $f8 = 2^63 */
+            o(O_FCMP_CLT_D | (8 << 10) | (rr << 5));     /* fcc0 = x < 2^63 */
+            o(O_BCNEZ | (7 << 10));                      /* bcnez fcc0, small */
+            o3r(O_FSUB_D, 9, rr, 8);
+            o(O_FTINTRZ_L_D | (9 << 5) | 9);
+            o(O_MOVFR2GR_D | (9 << 5) | dr);
+            o2ri(O_LU52I_D, 12, 0, -2048);               /* t0 = 1 << 63 */
+            o3r(O_XOR, dr, dr, 12);
+            gjmp_addr(ind + 12);                         /* b done */
+        }
+        o(O_FTINTRZ_L_D | (rr << 5) | 9);    /* small: ftintrz.l.d $f9, fj */
+        o(O_MOVFR2GR_D | (9 << 5) | dr);     /* movfr2gr.d rd=dr, fj=$f9 */
     }
 }
 
