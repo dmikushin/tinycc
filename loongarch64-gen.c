@@ -77,6 +77,16 @@
 #define O_MOD_D  0x00228000u
 #define O_DIV_DU 0x00230000u
 #define O_MOD_DU 0x00238000u
+#define O_ADD_W  0x00100000u
+#define O_SUB_W  0x00110000u
+#define O_SLL_W  0x00170000u
+#define O_SRL_W  0x00178000u
+#define O_SRA_W  0x00180000u
+#define O_MUL_W  0x001c0000u
+#define O_DIV_W  0x00200000u
+#define O_MOD_W  0x00208000u
+#define O_DIV_WU 0x00210000u
+#define O_MOD_WU 0x00218000u
 #define O_SLT    0x00120000u
 #define O_SLTU   0x00128000u
 #define O_FADD_D 0x01010000u
@@ -118,6 +128,8 @@
 /* shift */
 #define O_SLLI_W 0x00408000u
 #define O_SLLI_D 0x00410000u
+#define O_SRLI_W 0x00448000u
+#define O_SRAI_W 0x00488000u
 #define O_SRLI_D 0x00450000u
 #define O_SRAI_D 0x00490000u
 /* branch / jump */
@@ -1154,7 +1166,7 @@ static void gen_opil(int op, int ll)
                       goto too_big;    /* addi.d 不能表示 -(-2048), 走非立即数路径 */
                     fc = -fc;
                 case '+':
-                    o2ri(O_ADDI_D, ireg(d), a, (int)fc);
+                    o2ri(ll ? O_ADDI_D : O_ADDI_W, ireg(d), a, (int)fc);
                     --vtop;
                     vtop[0].r = d;
                     return;
@@ -1175,9 +1187,9 @@ static void gen_opil(int op, int ll)
                 case '^': o2ri(O_XORI, ireg(d), a, (int)fc); goto done2;
                 case '|': o2ri(O_ORI,  ireg(d), a, (int)fc); goto done2;
                 case '&': o2ri(O_ANDI, ireg(d), a, (int)fc); goto done2;
-                case TOK_SHL: oshift(O_SLLI_D, ireg(d), a, fc & 63); goto done2;
-                case TOK_SHR: oshift(O_SRLI_D, ireg(d), a, fc & 63); goto done2;
-                case TOK_SAR: oshift(O_SRAI_D, ireg(d), a, fc & 63); goto done2;
+                case TOK_SHL: oshift(ll ? O_SLLI_D : O_SLLI_W, ireg(d), a, fc & (ll ? 63 : 31)); goto done2;
+                case TOK_SHR: oshift(ll ? O_SRLI_D : O_SRLI_W, ireg(d), a, fc & (ll ? 63 : 31)); goto done2;
+                case TOK_SAR: oshift(ll ? O_SRAI_D : O_SRAI_W, ireg(d), a, fc & (ll ? 63 : 31)); goto done2;
 
                 case TOK_UGE: /* -> TOK_ULT */
                 case TOK_UGT: /* -> TOK_ULE */
@@ -1231,20 +1243,23 @@ static void gen_opil(int op, int ll)
         tcc_error("implement me: %s(%s)", __FUNCTION__, get_tok_str(op, NULL));
         break;
 
-    case '+': o3r(O_ADD_D, d, a, b); break;
-    case '-': o3r(O_SUB_D, d, a, b); break;
-    case TOK_SAR: o3r(O_SRA_D, d, a, b); break;
-    case TOK_SHR: o3r(O_SRL_D, d, a, b); break;
-    case TOK_SHL: o3r(O_SLL_D, d, a, b); break;
-    case '*': o3r(O_MUL_D, d, a, b); break;
+    /* 32-bit operations use the .w forms: they read the low 32 bits and
+       sign-extend the result, the register convention for int and
+       unsigned int alike (riscv64-gen.c does the same with its *w ops) */
+    case '+': o3r(ll ? O_ADD_D : O_ADD_W, d, a, b); break;
+    case '-': o3r(ll ? O_SUB_D : O_SUB_W, d, a, b); break;
+    case TOK_SAR: o3r(ll ? O_SRA_D : O_SRA_W, d, a, b); break;
+    case TOK_SHR: o3r(ll ? O_SRL_D : O_SRL_W, d, a, b); break;
+    case TOK_SHL: o3r(ll ? O_SLL_D : O_SLL_W, d, a, b); break;
+    case '*': o3r(ll ? O_MUL_D : O_MUL_W, d, a, b); break;
     case '/':
-    case TOK_PDIV: o3r(O_DIV_D, d, a, b); break;
+    case TOK_PDIV: o3r(ll ? O_DIV_D : O_DIV_W, d, a, b); break;
     case '&': o3r(O_AND, d, a, b); break;
     case '^': o3r(O_XOR, d, a, b); break;
     case '|': o3r(O_OR, d, a, b); break;
-    case '%': o3r(O_MOD_D, d, a, b); break;
-    case TOK_UMOD: o3r(O_MOD_DU, d, a, b); break;
-    case TOK_UDIV: o3r(O_DIV_DU, d, a, b); break;
+    case '%': o3r(ll ? O_MOD_D : O_MOD_W, d, a, b); break;
+    case TOK_UMOD: o3r(ll ? O_MOD_DU : O_MOD_WU, d, a, b); break;
+    case TOK_UDIV: o3r(ll ? O_DIV_DU : O_DIV_WU, d, a, b); break;
     }
 }
 
