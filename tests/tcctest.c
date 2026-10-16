@@ -4268,7 +4268,7 @@ void builtin_frame_address_test(void)
     char *fp0 = __builtin_frame_address(0);
 
     printf("str: %s\n", str);
-#ifndef __riscv // gcc dumps core. tcc, clang work
+#if !defined __riscv && !defined __loongarch__ // gcc dumps core. tcc, clang work
     bfa1(str-fp0);
 #endif
 #endif
