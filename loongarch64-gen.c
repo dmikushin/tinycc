@@ -1072,6 +1072,8 @@ ST_FUNC void arch_transfer_ret_regs(int aftercall)
     vtop--;
 }
 
+ST_DATA int func_frame_size, func_va_size;
+
 ST_FUNC void gfunc_epilog(void)
 {
     int v, saved_ind, d, large_ofs_ind;
@@ -1108,6 +1110,8 @@ ST_FUNC void gfunc_epilog(void)
         gjmp_addr(func_sub_sp_offset + 5*4);
     }
     saved_ind = ind;
+    func_frame_size = d;
+    func_va_size = num_va_regs * 8;
 
     ind = func_sub_sp_offset;
     o2ri(O_ADDI_D, 3, 3, -d);            // addi.d sp, sp, -d

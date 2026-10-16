@@ -1018,33 +1018,37 @@ static void tcc_debug_frame_end(TCCState *s1, int size)
     dwarf_data1(eh_frame_section, DW_CFA_def_cfa_offset);
     dwarf_uleb128(eh_frame_section, 0); // ofs 0
 #elif defined TCC_TARGET_LOONGARCH64
+    /* loongarch64-gen.c's frame: prolog (20 bytes)
+         addi.d sp, sp, -d ; st.d ra, sp, d-8-va ; st.d fp, sp, d-16-va ;
+         addi.d fp, sp, d-va (or a branch to the large-frame tail) ; nop
+       where va = bytes of varargs registers spilled just below the CFA, so
+       fp = CFA - va, ra at CFA-8-va, fp at CFA-16-va; epilog before ret:
+         addi.d sp, fp, va (sp = CFA) ; ld.d ra ; ld.d fp ; ret.
+       The CIE's data alignment factor is -8, so offsets count 8-byte units. */
     dwarf_data1(eh_frame_section, DW_CFA_advance_loc + 4);
     dwarf_data1(eh_frame_section, DW_CFA_def_cfa_offset);
-    dwarf_uleb128(eh_frame_section, 16); // ofs 16
+    dwarf_uleb128(eh_frame_section, func_frame_size); // sp + d
     dwarf_data1(eh_frame_section, DW_CFA_advance_loc + 8);
     dwarf_data1(eh_frame_section, DW_CFA_offset + 1); // r1 (ra)
-    dwarf_uleb128(eh_frame_section, 2); // cfa-8
+    dwarf_uleb128(eh_frame_section, 1 + func_va_size / 8); // cfa-8-va
     dwarf_data1(eh_frame_section, DW_CFA_offset + 22); // r22 (fp)
-    dwarf_uleb128(eh_frame_section, 4); // cfa-16
+    dwarf_uleb128(eh_frame_section, 2 + func_va_size / 8); // cfa-16-va
     dwarf_data1(eh_frame_section, DW_CFA_advance_loc + 8);
     dwarf_data1(eh_frame_section, DW_CFA_def_cfa);
     dwarf_uleb128(eh_frame_section, 22); // r22 (fp)
-    dwarf_uleb128(eh_frame_section, 0); // ofs 0
+    dwarf_uleb128(eh_frame_section, func_va_size); // fp + va
     dwarf_data1(eh_frame_section, DW_CFA_advance_loc4);
     while (size >= 4 &&
 	   read32le(cur_text_section->data + func_ind + size - 4) != 0x4c000020)
 	size -= 4; /* jirl $zero, $ra, 0 = ret */
-    dwarf_data4(eh_frame_section, size - 36);
+    dwarf_data4(eh_frame_section, size - 32); // after 'addi.d sp, fp, va'
     dwarf_data1(eh_frame_section, DW_CFA_def_cfa);
     dwarf_uleb128(eh_frame_section, 3); // r3 (sp)
-    dwarf_uleb128(eh_frame_section, 16); // ofs 16
+    dwarf_uleb128(eh_frame_section, 0); // sp = CFA
     dwarf_data1(eh_frame_section, DW_CFA_advance_loc + 4);
     dwarf_data1(eh_frame_section, DW_CFA_restore + 1); // r1 (ra)
     dwarf_data1(eh_frame_section, DW_CFA_advance_loc + 4);
     dwarf_data1(eh_frame_section, DW_CFA_restore + 22); // r22 (fp)
-    dwarf_data1(eh_frame_section, DW_CFA_advance_loc + 4);
-    dwarf_data1(eh_frame_section, DW_CFA_def_cfa_offset);
-    dwarf_uleb128(eh_frame_section, 0); // ofs 0
 #endif
     while ((eh_frame_section->data_offset - fde_start) & 3)
 	dwarf_data1(eh_frame_section, DW_CFA_nop);

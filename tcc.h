@@ -1757,6 +1757,8 @@ ST_FUNC void gen_clear_cache(void);
 
 /* ------------ loongarch64-gen.c ------------ */
 #ifdef TCC_TARGET_LOONGARCH64
+/* frame of the function just ended, for its .eh_frame FDE (tccdbg.c) */
+ST_DATA int func_frame_size, func_va_size;
 ST_FUNC void gen_opl(int op);
 ST_FUNC void gen_va_start(void);
 ST_FUNC void arch_transfer_ret_regs(int);
