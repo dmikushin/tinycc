@@ -46,8 +46,6 @@
 
 #define MAX_ALIGN 16
 
-#define CHAR_IS_UNSIGNED
-
 /* define if return values need to be extended explicitely
    at caller side (for interfacing with non-TCC compilers) */
 #define PROMOTE_RET
@@ -188,11 +186,22 @@
 #define O_FCVT_S_D   0x01191800u  /* fcvt.s.d fd, fj */
 #define O_FCVT_D_S   0x01192400u  /* fcvt.d.s fd, fj */
 
+/* The LP64D subset of GCC's predefined macros (gcc -dM -E on loongarch64).
+   glibc's <gnu/stubs.h> picks stubs-lp64s.h on mere *definedness* of
+   __loongarch_soft_float, so that macro must not exist at all. */
 ST_DATA const char * const target_machine_defs =
-    "__loongarch__\0"
-    "__loongarch64\0"
-    "__loongarch_lp64\0"
-    "__loongarch_soft_float 0\0"
+    "__loongarch__ 1\0"
+    "__loongarch64 1\0"
+    "__loongarch_grlen 64\0"
+    "__loongarch_frlen 64\0"
+    "__loongarch_lp64 1\0"
+    "__loongarch_hard_float 1\0"
+    "__loongarch_double_float 1\0"
+    "_ABILP64 3\0"
+    "_LOONGARCH_SIM _ABILP64\0"
+    "_LOONGARCH_SZINT 32\0"
+    "_LOONGARCH_SZLONG 64\0"
+    "_LOONGARCH_SZPTR 64\0"
     ;
 
 ST_DATA const int reg_classes[NB_REGS] = {
