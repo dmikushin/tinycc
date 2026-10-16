@@ -455,6 +455,12 @@ ST_FUNC void load(int r, SValue *sv)
            "12 位可表示" 直接 addi.d 0, 高位全丢 (与 gen_opil 同理) */
         int64_t cv = (int64_t)sv->c.i;
         int rb = 0;
+        /* 32-bit values live sign-extended in registers, unsigned int
+           too, so 0x80000000u must become 0xffffffff80000000 to compare
+           equal to a computed unsigned int (riscv64 loads it with addiw) */
+        if (bt != VT_LLONG && bt != VT_PTR && bt != VT_FUNC && !(fr & VT_SYM)
+            && !is_float(sv->type.t))
+            cv = (int32_t)cv;
         if (is_float(sv->type.t) && bt != VT_LDOUBLE) {
             /* load float/double constant: move bit pattern from int reg */
             uint64_t val = sv->c.i;
