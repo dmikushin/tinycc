@@ -1,102 +1,7 @@
 /* LoongArch64 ELF linker / relocations for TCC */
 #ifdef TARGET_DEFS_ONLY
 
-#define EM_TCC_TARGET 258   /* EM_LOONGARCH */
-
-/* LoongArch ELF relocations (LoongArch ELF ABI v2.01).
-   R_LARCH_* are NOT in elf.h (unlike R_RISCV_*), and tcc.h includes
-   the backends with TARGET_DEFS_ONLY defined, so this branch is the
-   only part of link.c seen by tccgen.c/tccelf.c/etc.  The full table
-   must therefore be self-contained HERE (the #else branch below
-   repeats it under #ifndef R_LARCH_NONE, which is then skipped). */
-#ifndef R_LARCH_NONE
-#define R_LARCH_NONE          0
-#define R_LARCH_32            1
-#define R_LARCH_64            2
-#define R_LARCH_RELATIVE      3
-#define R_LARCH_COPY          4
-#define R_LARCH_JUMP_SLOT     5
-#define R_LARCH_TLS_DTPMOD32  6
-#define R_LARCH_TLS_DTPMOD64  7
-#define R_LARCH_TLS_DTPREL32  8
-#define R_LARCH_TLS_DTPREL64  9
-#define R_LARCH_TLS_TPREL32  10
-#define R_LARCH_TLS_TPREL64  11
-#define R_LARCH_IRELATIVE    12
-#define R_LARCH_MARK_LA      20
-#define R_LARCH_MARK_PCREL   21
-#define R_LARCH_ADD8         47
-#define R_LARCH_ADD16        48
-#define R_LARCH_ADD24        49
-#define R_LARCH_ADD32        50
-#define R_LARCH_ADD64        51
-#define R_LARCH_SUB8         52
-#define R_LARCH_SUB16        53
-#define R_LARCH_SUB24        54
-#define R_LARCH_SUB32        55
-#define R_LARCH_SUB64        56
-#define R_LARCH_GNU_VTINHERIT 57
-#define R_LARCH_GNU_VTENTRY  58
-#define R_LARCH_B16          64
-#define R_LARCH_B21          65
-#define R_LARCH_B26          66
-#define R_LARCH_ABS_HI20     67
-#define R_LARCH_ABS_LO12     68
-#define R_LARCH_ABS64_LO20   69
-#define R_LARCH_ABS64_HI12   70
-#define R_LARCH_PCALA_HI20   71
-#define R_LARCH_PCALA_LO12   72
-#define R_LARCH_PCALA64_LO20 73
-#define R_LARCH_PCALA64_HI12 74
-#define R_LARCH_GOT_PC_HI20  75
-#define R_LARCH_GOT_PC_LO12  76
-#define R_LARCH_GOT64_PC_LO20 77
-#define R_LARCH_GOT64_PC_HI12 78
-#define R_LARCH_GOT_HI20     79
-#define R_LARCH_GOT_LO12     80
-#define R_LARCH_GOT64_LO20   81
-#define R_LARCH_GOT64_HI12   82
-#define R_LARCH_TLS_LE_HI20  83
-#define R_LARCH_TLS_LE_LO12  84
-#define R_LARCH_TLS_LE64_LO20 85
-#define R_LARCH_TLS_LE64_HI12 86
-#define R_LARCH_TLS_TPREL_HI20 87
-#define R_LARCH_TLS_TPREL_LO12 88
-#define R_LARCH_TLS_TPREL64_LO20 89
-#define R_LARCH_TLS_TPREL64_HI12 90
-#define R_LARCH_TLS_DTPREL_HI20 91
-#define R_LARCH_TLS_DTPREL_LO12 92
-#define R_LARCH_TLS_DTPREL64_LO20 93
-#define R_LARCH_TLS_DTPREL64_HI12 94
-#define R_LARCH_TLS_GD_PC_HI20 95
-#define R_LARCH_TLS_GD_PC_LO12 96
-#define R_LARCH_TLS_LD_PC_HI20 97
-#define R_LARCH_TLS_LD_PC_LO12 98
-#define R_LARCH_32_PCREL    99
-/* relax 相关(ABI v2.10, binutils>=2.41; 编号以 glibc/内核 elf.h 为准):
-   RELAX=100 DELETE=101 ALIGN=102 是标记, 静态链接忽略;
-   PCREL20_S2=103(pcaddi) 需真解析; CFA=104 是 dwarf 标记, 忽略;
-   ADD6/SUB6=105/106, ADD/SUB_ULEB128=107/108 是真算术重定位, 必须实现;
-   64_PCREL=109 同 32_PCREL 的 64 位版。
-   (注意: 本文件此前误把 DELETE=100/CFA=101, 且把 105/106 当成
-    PCALA64_LO12/HI20 —— 实为 ADD6/SUB6, 按 PCALA 公式改写会损坏代码) */
-#define R_LARCH_RELAX       100
-#define R_LARCH_DELETE      101
-#define R_LARCH_ALIGN       102
-#define R_LARCH_PCREL20_S2  103
-#define R_LARCH_CFA         104
-#define R_LARCH_ADD6        105
-#define R_LARCH_SUB6        106
-#define R_LARCH_ADD_ULEB128 107
-#define R_LARCH_SUB_ULEB128 108
-#define R_LARCH_64_PCREL    109
-/* ABI v2.30 (binutils>=2.42): 可松弛的 PCALA 对(medium code model),
-   静态链接语义与 PCALA_HI20/LO12 完全相同 */
-#define R_LARCH_PCREL64_LO12 110
-#define R_LARCH_PCREL64_HI20 111
-#define R_LARCH_PCALA64_LO12 112
-#define R_LARCH_PCALA64_HI20 113
-#endif
+#define EM_TCC_TARGET EM_LOONGARCH
 
 #define R_DATA_32  R_LARCH_32
 #define R_DATA_PTR R_LARCH_64
@@ -105,12 +10,12 @@
 #define R_COPY     R_LARCH_COPY
 #define R_RELATIVE R_LARCH_RELATIVE
 
-#define R_NUM      100
+#define R_NUM      R_LARCH_NUM
 
 #define ELF_START_ADDR 0x00010000
 #define ELF_PAGE_SIZE 0x1000
 
-#define PCRELATIVE_DLLPLT 0
+#define PCRELATIVE_DLLPLT 1
 #define RELOCATE_DLLPLT 1
 
 #else /* !TARGET_DEFS_ONLY */
@@ -118,88 +23,6 @@
 //#define DEBUG_RELOC
 #include "tcc.h"
 
-/* LoongArch ELF relocations (LoongArch ELF ABI v2.01) */
-#ifndef R_LARCH_NONE
-#define R_LARCH_NONE          0
-#define R_LARCH_32            1
-#define R_LARCH_64            2
-#define R_LARCH_RELATIVE      3
-#define R_LARCH_COPY          4
-#define R_LARCH_JUMP_SLOT     5
-#define R_LARCH_TLS_DTPMOD32  6
-#define R_LARCH_TLS_DTPMOD64  7
-#define R_LARCH_TLS_DTPREL32  8
-#define R_LARCH_TLS_DTPREL64  9
-#define R_LARCH_TLS_TPREL32  10
-#define R_LARCH_TLS_TPREL64  11
-#define R_LARCH_IRELATIVE    12
-#define R_LARCH_MARK_LA      20
-#define R_LARCH_MARK_PCREL   21
-#define R_LARCH_ADD8         47
-#define R_LARCH_ADD16        48
-#define R_LARCH_ADD24        49
-#define R_LARCH_ADD32        50
-#define R_LARCH_ADD64        51
-#define R_LARCH_SUB8         52
-#define R_LARCH_SUB16        53
-#define R_LARCH_SUB24        54
-#define R_LARCH_SUB32        55
-#define R_LARCH_SUB64        56
-#define R_LARCH_GNU_VTINHERIT 57
-#define R_LARCH_GNU_VTENTRY  58
-#define R_LARCH_B16          64
-#define R_LARCH_B21          65
-#define R_LARCH_B26          66
-#define R_LARCH_ABS_HI20     67
-#define R_LARCH_ABS_LO12     68
-#define R_LARCH_ABS64_LO20   69
-#define R_LARCH_ABS64_HI12   70
-#define R_LARCH_PCALA_HI20   71
-#define R_LARCH_PCALA_LO12   72
-#define R_LARCH_PCALA64_LO20 73
-#define R_LARCH_PCALA64_HI12 74
-#define R_LARCH_GOT_PC_HI20  75
-#define R_LARCH_GOT_PC_LO12  76
-#define R_LARCH_GOT64_PC_LO20 77
-#define R_LARCH_GOT64_PC_HI12 78
-#define R_LARCH_GOT_HI20     79
-#define R_LARCH_GOT_LO12     80
-#define R_LARCH_GOT64_LO20   81
-#define R_LARCH_GOT64_HI12   82
-#define R_LARCH_TLS_LE_HI20  83
-#define R_LARCH_TLS_LE_LO12  84
-#define R_LARCH_TLS_LE64_LO20 85
-#define R_LARCH_TLS_LE64_HI12 86
-#define R_LARCH_TLS_TPREL_HI20 87
-#define R_LARCH_TLS_TPREL_LO12 88
-#define R_LARCH_TLS_TPREL64_LO20 89
-#define R_LARCH_TLS_TPREL64_HI12 90
-#define R_LARCH_TLS_DTPREL_HI20 91
-#define R_LARCH_TLS_DTPREL_LO12 92
-#define R_LARCH_TLS_DTPREL64_LO20 93
-#define R_LARCH_TLS_DTPREL64_HI12 94
-#define R_LARCH_TLS_GD_PC_HI20 95
-#define R_LARCH_TLS_GD_PC_LO12 96
-#define R_LARCH_TLS_LD_PC_HI20 97
-#define R_LARCH_TLS_LD_PC_LO12 98
-#define R_LARCH_32_PCREL    99
-/* relax 相关(ABI v2.10): 编号同上块, 以 glibc/内核 elf.h 为准 */
-#define R_LARCH_RELAX       100
-#define R_LARCH_DELETE      101
-#define R_LARCH_ALIGN       102
-#define R_LARCH_PCREL20_S2  103
-#define R_LARCH_CFA         104
-#define R_LARCH_ADD6        105
-#define R_LARCH_SUB6        106
-#define R_LARCH_ADD_ULEB128 107
-#define R_LARCH_SUB_ULEB128 108
-#define R_LARCH_64_PCREL    109
-/* ABI v2.30: 可松弛 PCALA 对, 语义同 PCALA_HI20/LO12 */
-#define R_LARCH_PCREL64_LO12 110
-#define R_LARCH_PCREL64_HI20 111
-#define R_LARCH_PCALA64_LO12 112
-#define R_LARCH_PCALA64_HI20 113
-#endif
 
 /* Returns 1 for a code relocation, 0 for a data relocation. For unknown
    relocations, returns -1. */
@@ -210,6 +33,7 @@ ST_FUNC int code_reloc (int reloc_type)
     case R_LARCH_B16:
     case R_LARCH_B21:
     case R_LARCH_B26:
+    case R_LARCH_CALL36:
     case R_LARCH_RELAX:    /* relax 标记, 在代码段, relocate() 忽略 */
     case R_LARCH_DELETE:
     case R_LARCH_CFA:
@@ -219,8 +43,6 @@ ST_FUNC int code_reloc (int reloc_type)
 
     case R_LARCH_PCALA_HI20:
     case R_LARCH_PCALA_LO12:
-    case R_LARCH_PCALA64_LO12:  /* 112: 同 PCALA_LO12 */
-    case R_LARCH_PCALA64_HI20:  /* 113: 同 PCALA_HI20 */
     case R_LARCH_ABS_HI20:
     case R_LARCH_ABS_LO12:
     case R_LARCH_ABS64_LO20:
@@ -293,10 +115,9 @@ ST_FUNC int gotplt_entry_type (int reloc_type)
     case R_LARCH_B16:
     case R_LARCH_B21:
     case R_LARCH_B26:
+    case R_LARCH_CALL36:
     case R_LARCH_PCALA_HI20:
     case R_LARCH_PCALA_LO12:
-    case R_LARCH_PCALA64_LO12:
-    case R_LARCH_PCALA64_HI20:
     case R_LARCH_ABS_HI20:
     case R_LARCH_ABS_LO12:
     case R_LARCH_ABS64_LO20:
@@ -332,7 +153,10 @@ ST_FUNC unsigned create_plt_entry(TCCState *s1, unsigned got_offset, struct sym_
     return plt_offset;
 }
 
-/* relocate the PLT */
+/* relocate the PLT: same layout and lazy-binding contract as GNU ld's
+   LoongArch PLT (and tcc's riscv64 one): $t0 = link map (got[1]),
+   $t1 = 8 * slot index, $t3 = resolver (got[0]).  pcaddu12i is plain
+   PC + (si20 << 12), so hi/lo is the RISC-V auipc split. */
 ST_FUNC void relocate_plt(TCCState *s1)
 {
     uint8_t *p, *p_end;
@@ -343,14 +167,36 @@ ST_FUNC void relocate_plt(TCCState *s1)
     p = s1->plt->data;
     p_end = p + s1->plt->data_offset;
 
-    /* Minimal PLT: not used for static RmikuOS programs.  Fill with
-       pcalau12i+ld.d+jirl placeholder so it at least links. */
-    while (p < p_end) {
-        write32le(p, 0x1a000000u);  /* pcalau12i $t0, 0 (原误写 0x16000000=lu32i.d) */
-        write32le(p + 4, 0x28c0058cu); /* ld.d $t0, $t0, 0 */
-        write32le(p + 8, 0x4c000180u); /* jirl $zero, $t0, 0 */
-        write32le(p + 12, 0x03400000u); /* nop */
-        p += 16;
+    if (p < p_end) {
+        uint64_t plt = s1->plt->sh_addr;
+        uint64_t got = s1->got->sh_addr;
+        uint64_t off = (got - plt + 0x800) >> 12;
+        if ((off + ((uint32_t)1 << 20)) >> 21)
+            tcc_error_noabort("Failed relocating PLT (off=0x%lx, got=0x%lx, plt=0x%lx)", (long)off, (long)got, (long)plt);
+        write32le(p, 0x1c00000e | ((off & 0xfffff) << 5));   // pcaddu12i $t2, %pcrel_hi(got)
+        write32le(p + 4, 0x0011bdad);                        // sub.d $t1, $t1, $t3
+        write32le(p + 8, 0x28c001cf                          // ld.d $t3, $t2, %pcrel_lo(got)
+                         | (((got - plt) & 0xfff) << 10));
+        write32le(p + 12, 0x02ff51ad);                       // addi.d $t1, $t1, -(32+12)
+        write32le(p + 16, 0x02c001cc                         // addi.d $t0, $t2, %pcrel_lo(got)
+                          | (((got - plt) & 0xfff) << 10));
+        write32le(p + 20, 0x004505ad);                       // srli.d $t1, $t1, log2(16/PTRSIZE)
+        write32le(p + 24, 0x28c0218c);                       // ld.d $t0, $t0, PTRSIZE
+        write32le(p + 28, 0x4c0001e0);                       // jr $t3
+        p += 32;
+        while (p < p_end) {
+            uint64_t pc = plt + (p - s1->plt->data);
+            uint64_t addr = got + read64le(p);
+            uint64_t off = (addr - pc + 0x800) >> 12;
+            if ((off + ((uint32_t)1 << 20)) >> 21)
+                tcc_error_noabort("Failed relocating PLT (off=0x%lx, addr=0x%lx, pc=0x%lx)", (long)off, (long)addr, (long)pc);
+            write32le(p, 0x1c00000f | ((off & 0xfffff) << 5)); // pcaddu12i $t3, %pcrel_hi(func@got)
+            write32le(p + 4, 0x28c001ef                        // ld.d $t3, $t3, %pcrel_lo(func@got)
+                             | (((addr - pc) & 0xfff) << 10));
+            write32le(p + 8, 0x4c0001ed);                      // jirl $t1, $t3, 0
+            write32le(p + 12, 0x03400000);                     // nop
+            p += 16;
+        }
     }
 
     if (s1->plt->reloc) {
@@ -365,8 +211,6 @@ ST_FUNC void relocate_plt(TCCState *s1)
 ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
               addr_t addr, addr_t val)
 {
-    uint64_t off64;
-    uint32_t off32;
     int sym_index = ELFW(R_SYM)(rel->r_info);
 
     switch(type) {
@@ -461,6 +305,18 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
         write32le(ptr, insn);
         return;
     }
+    case R_LARCH_CALL36: {
+        /* pcaddu18i rd, si20 ; jirl rd, rd, si16 (medium code model calls,
+           e.g. in glibc's crt1.o): si20 = (S+A-P+0x20000) >> 18,
+           si16 = (S+A-P - (si20 << 18)) >> 2 */
+        int64_t off = val - addr, hi = (off + 0x20000) >> 18;
+        if ((off + ((int64_t)1 << 37)) & ~(((int64_t)1 << 38) - 4))
+            tcc_error_noabort("R_LARCH_CALL36 relocation failed");
+        write32le(ptr, (read32le(ptr) & 0xfe00001fu) | ((hi & 0xfffff) << 5));
+        write32le(ptr + 4, (read32le(ptr + 4) & 0xfc0003ffu)
+                           | ((((off - (hi << 18)) >> 2) & 0xffff) << 10));
+        return;
+    }
     case R_LARCH_B21: {
         /* beqz/bnez: si21 = (S+A-PC)>>2; bits[25:10]=si21[15:0], bits[4:0]=si21[20:16],
            bits[9:5]=rj 必须保留(原实现 mask 0xfc000000 把 rj 清零) */
@@ -486,7 +342,6 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
     }
 
     case R_LARCH_PCALA_HI20: {
-        pcala_hi20:
         /* psABI: imm20 = (((S+A+0x800) & ~0xfff) - (P & ~0xfff)) >> 12
            pcalau12i 是页对齐语义: rd = (PC & ~0xfff) + sext20(imm20)<<12,
            与 LO12 的 addi.d 符号扩展配套后对任意 P 正确。
@@ -506,7 +361,6 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
         return;
     }
     case R_LARCH_PCALA_LO12: {
-        pcala_lo12:
         /* psABI: imm12 = (S+A) & 0xfff —— 不减 P!
            pcalau12i 页对齐语义下, addi.d 对 imm12 的符号扩展
            正好补偿 HI20 的 +0x800 进位。 */
@@ -515,10 +369,6 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
         write32le(ptr, insn);
         return;
     }
-    case R_LARCH_PCALA64_LO12: /* 112: ABI v2.30 可松弛形式, 语义同 PCALA_LO12 */
-        goto pcala_lo12;
-    case R_LARCH_PCALA64_HI20: /* 113: 同 PCALA_HI20 */
-        goto pcala_hi20;
     case R_LARCH_ABS_HI20: {
         /* lu12i.w+addi.w 配对: imm20 = ((S+A+0x800) >> 12) & 0xfffff
            (原实现缺 +0x800, 低 12 位 >= 0x800 的绝对地址全错 4KB) */

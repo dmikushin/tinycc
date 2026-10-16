@@ -3544,15 +3544,12 @@ invalid:
                     && type != R_RISCV_ALIGN
                     && type != R_RISCV_RELAX
 #elif defined TCC_TARGET_LOONGARCH64
-                    /* relax 标记重定位指向 section 符号, 符号重编号后为 0,
-                       与 RISCV ALIGN/RELAX 同样豁免。
-                       R_LARCH_* 不在 elf.h, 用数字(ABI v2.10):
-                       RELAX=100 DELETE=101 ALIGN=102 PCREL20_S2=103 CFA=104 */
-                    && type != 100
-                    && type != 101
-                    && type != 102
-                    && type != 103
-                    && type != 104
+                    /* relax markers carry no symbol, like RISC-V's */
+                    && type != R_LARCH_RELAX
+                    && type != R_LARCH_DELETE
+                    && type != R_LARCH_ALIGN
+                    && type != R_LARCH_PCREL20_S2
+                    && type != R_LARCH_CFA
 #endif
                    ) {
                 invalid_reloc:

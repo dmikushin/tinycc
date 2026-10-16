@@ -56,42 +56,6 @@
 #include "tcc.h"
 #include <assert.h>
 
-/* ---- LoongArch ELF relocations (also defined in loongarch64-link.c,
-   #ifndef-protected there; needed here because gen.c compiles as its own
-   translation unit and R_LARCH_* is not in elf.h) ---- */
-#ifndef R_LARCH_NONE
-#define R_LARCH_NONE          0
-#define R_LARCH_32            1
-#define R_LARCH_64            2
-#define R_LARCH_RELATIVE      3
-#define R_LARCH_COPY          4
-#define R_LARCH_JUMP_SLOT     5
-#define R_LARCH_IRELATIVE    12
-#define R_LARCH_ADD8         47
-#define R_LARCH_ADD16        48
-#define R_LARCH_ADD24        49
-#define R_LARCH_ADD32        50
-#define R_LARCH_ADD64        51
-#define R_LARCH_SUB8         52
-#define R_LARCH_SUB16        53
-#define R_LARCH_SUB24        54
-#define R_LARCH_SUB32        55
-#define R_LARCH_SUB64        56
-#define R_LARCH_B16          64
-#define R_LARCH_B21          65
-#define R_LARCH_B26          66
-#define R_LARCH_ABS_HI20     67
-#define R_LARCH_ABS_LO12     68
-#define R_LARCH_PCALA_HI20   71
-#define R_LARCH_PCALA_LO12   72
-#define R_LARCH_GOT_PC_HI20  75
-#define R_LARCH_GOT_PC_LO12  76
-#define R_LARCH_GOT_HI20     79
-#define R_LARCH_GOT_LO12     80
-#define R_LARCH_TLS_LE_HI20  83
-#define R_LARCH_TLS_LE_LO12  84
-#define R_LARCH_32_PCREL     99
-#endif
 
 #define XLEN 8
 
@@ -348,6 +312,8 @@ ST_FUNC void gsym_addr(int t_, int a_)
         t = next;
     }
 }
+static void load_large_constant(int rr, int fc, int hi32);
+
 /* Load the address of sv (symbol / local) into a register, return reg.
    new_fc receives the residual 12-bit offset (usually 0). */
 static int load_symofs(int r, SValue *sv, int forstore, int *new_fc)
@@ -357,15 +323,32 @@ static int load_symofs(int r, SValue *sv, int forstore, int *new_fc)
     if (sv->r & VT_SYM) {
         assert(v == VT_CONST);
         rr = is_ireg(r) ? ireg(r) : 12;  /* r12 = t0 (LoongArch 的 r5 是 a1 参数寄存器, 不能当 scratch) */
-        /* pcalau12i rr, %pc_hi20(sym) ; addi.d rr, rr, %pc_lo12(sym)
-           pcalau12i 为页对齐语义(rd=(PC&~0xfff)+sext20(imm20)<<12),
-           PCALA_LO12 直接取 S+A 低 12 位(无 riscv 的 HI/LO 配对机制),
-           两个重定位必须引用同一个符号。 */
-        greloca(cur_text_section, sv->sym, ind, R_LARCH_PCALA_HI20, sv->c.i);
-        oli20(O_PCALAU12I, rr, 0);
-        greloca(cur_text_section, sv->sym, ind, R_LARCH_PCALA_LO12, sv->c.i);
-        o2ri(O_ADDI_D, rr, rr, 0);
-        *new_fc = 0;
+        if (sv->sym->type.t & VT_STATIC) {
+            /* pcalau12i rr, %pc_hi20(sym+A) ; addi.d rr, rr, %pc_lo12(sym+A)
+               (page-aligned pcalau12i; both relocs name the same symbol) */
+            greloca(cur_text_section, sv->sym, ind, R_LARCH_PCALA_HI20, sv->c.i);
+            oli20(O_PCALAU12I, rr, 0);
+            greloca(cur_text_section, sv->sym, ind, R_LARCH_PCALA_LO12, sv->c.i);
+            o2ri(O_ADDI_D, rr, rr, 0);
+            *new_fc = 0;
+        } else {
+            /* Any other symbol may live outside +-2GB of this code: a
+               libc symbol, or one given by tcc_add_symbol() when the code
+               runs from memory. Load its address from the GOT:
+               pcalau12i rr, %got_pc_hi20(sym) ; ld.d rr, rr, %got_pc_lo12(sym)
+               and apply the addend afterwards. */
+            greloca(cur_text_section, sv->sym, ind, R_LARCH_GOT_PC_HI20, 0);
+            oli20(O_PCALAU12I, rr, 0);
+            greloca(cur_text_section, sv->sym, ind, R_LARCH_GOT_PC_LO12, 0);
+            o2ri(O_LD_D, rr, rr, 0);
+            if (imm12_ok(fc)) {
+                *new_fc = fc;
+            } else {
+                load_large_constant(13, fc, fc < 0 ? -1 : 0);  /* t1 */
+                o3r(O_ADD_D, rr, rr, 13);
+                *new_fc = 0;
+            }
+        }
         return rr;
     } else if (v == VT_LOCAL || v == VT_LLOCAL) {
         rr = 22; /* fp */
@@ -572,13 +555,11 @@ static void gcall_or_jmp(int docall)
     int tr = docall ? 1 : 12; /* ra or t0 */
     if ((vtop->r & (VT_VALMASK | VT_LVAL)) == VT_CONST &&
         ((vtop->r & VT_SYM) && vtop->c.i == (int)vtop->c.i)) {
-        /* constant symbolic case -> pcalau12i + addi.d + jirl
-           PCALA_LO12 需引用同一符号(无 riscv 的 HI/LO 配对机制) */
-        greloca(cur_text_section, vtop->sym, ind, R_LARCH_PCALA_HI20, (int)vtop->c.i);
-        oli20(O_PCALAU12I, tr, 0);
-        greloca(cur_text_section, vtop->sym, ind, R_LARCH_PCALA_LO12, (int)vtop->c.i);
-        o2ri(O_ADDI_D, tr, tr, 0);
-        ojirl(tr, tr, 0);  /* jirl tr, tr, 0 */
+        /* constant symbolic case -> bl/b sym with R_LARCH_B26: the linker
+           routes it through a PLT entry when the target is outside this
+           image (shared library, tcc_add_symbol() address) */
+        greloca(cur_text_section, vtop->sym, ind, R_LARCH_B26, (int)vtop->c.i);
+        o(docall ? O_BL : O_B);
     } else if (vtop->r < VT_CONST) {
         int r = ireg(vtop->r);
         ojirl(tr, r, 0);   /* jirl tr, r, 0 */
@@ -595,11 +576,8 @@ static void gcall_or_jmp(int docall)
 static void gen_bounds_call(int v)
 {
     Sym *sym = external_helper_sym(v);
-    greloca(cur_text_section, sym, ind, R_LARCH_PCALA_HI20, 0);
-    oli20(O_PCALAU12I, 1, 0);
-    greloca(cur_text_section, sym, ind, R_LARCH_PCALA_LO12, 0);
-    o2ri(O_ADDI_D, 1, 1, 0);
-    ojirl(1, 1, 0);  /* jirl ra, ra, 0: 调用需保存返回地址 */
+    greloca(cur_text_section, sym, ind, R_LARCH_B26, 0);
+    o(O_BL);
 }
 
 static void gen_bounds_prolog(void)
